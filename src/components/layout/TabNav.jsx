@@ -29,7 +29,7 @@ export function TabNav({ activeTab, onTabChange }) {
               transition={{ type: "spring", stiffness: 400, damping: 20 }}
               aria-current={isActive ? "page" : undefined}
               className={[
-                "relative flex-1 min-w-[72px] rounded-full border px-4 py-2.5 text-xs font-semibold uppercase tracking-widest whitespace-nowrap",
+                "relative rounded-full border px-4 py-2.5 text-xs font-semibold uppercase tracking-widest whitespace-nowrap shrink-0",
                 "transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-1/40",
                 isActive
                   ? "border-brand-1 bg-brand-1 text-white"
