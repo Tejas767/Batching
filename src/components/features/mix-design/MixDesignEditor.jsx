@@ -18,23 +18,22 @@ export function MixDesignEditor({ mixDesign, syncMessage, onUpdateCell, onSave, 
         label="Edit Configuration"
         title="Mix Design Editor"
         action={
-          <div className="flex items-center gap-3">
-            {syncMessage && (
-              <span className="text-xs font-semibold text-brand-1">{syncMessage}</span>
-            )}
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={onReset}
-              icon={<RotateCcw size={13} />}
-            >
-              Reset
-            </Button>
-          </div>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={onReset}
+            icon={<RotateCcw size={13} />}
+          >
+            Reset
+          </Button>
         }
       />
-      <p className="mb-6 -mt-2 text-sm text-stone-500">
+      <p className="mb-1 -mt-2 text-sm text-stone-500">
         Update mix design values. Changes apply to MAIN and REPORT tabs.
+      </p>
+      {/* Status message — stable line below subtitle, won't cause layout shift */}
+      <p className={`mb-5 text-xs font-semibold transition-opacity duration-300 ${syncMessage ? "text-brand-1 opacity-100" : "opacity-0 select-none"}`}>
+        {syncMessage || "‎"}{/* non-empty so it keeps its line height */}
       </p>
       <div className="overflow-x-auto">
         <table className="min-w-full border-separate border-spacing-0 text-sm">
