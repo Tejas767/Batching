@@ -13,7 +13,7 @@ export const initialMixDesign = {
   M10: { rSan: "", cSan: "", dash1: "", mm20: "", mm10: "", dash2: "", cem1: "", flyAsh: "", dash3: "", water: "", admix1: "", admix2: "" },
   M15: { rSan:"" , cSan: "", dash1: "", mm20: "", mm10: "", dash2: "", cem1: "", flyAsh: "", dash3: "", water: "", admix1: "", admix2: "" },
   M20: { rSan: "", cSan: "", dash1: "", mm20: "", mm10: "", dash2: "", cem1: "", flyAsh: "", dash3: "", water: "", admix1: "", admix2: "" },
-  M25: { rSan: 5, cSan: 200, dash1: "", mm20: 300, mm10: 400, dash2: "", cem1: 140, flyAsh: 35, dash3: "", water: 90, admix1: 0.00, admix2: 1.60 },
+  M25: { rSan: "", cSan: "", dash1: "", mm20: "", mm10: "", dash2: "", cem1: "", flyAsh: "", dash3: "", water: "", admix1: "", admix2: "" },
   M30: { rSan: "", cSan: "", dash1: "", mm20: "", mm10: "", dash2: "", cem1: "", flyAsh: "", dash3: "", water: "", admix1: "", admix2: "" },
 };
 
