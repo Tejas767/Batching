@@ -136,10 +136,10 @@ export default function Home() {
         >
           {/* ── ENTRY TAB ─── */}
           {activeTab === "ENTRY" && (
-            <div className="mx-auto max-w-4xl">
-              <div className="rounded-3xl border border-border bg-white p-8 shadow-card">
-                <div className="mb-6 flex items-center justify-between">
-                  <h2 className="text-xl font-semibold text-brand-1">Batch Entry</h2>
+            <div className="md:mx-auto md:max-w-4xl">
+              <div className="rounded-2xl md:rounded-3xl border border-border bg-white p-5 md:p-8 shadow-card">
+                <div className="mb-5 flex items-center justify-between">
+                  <h2 className="text-lg md:text-xl font-semibold text-brand-1">Batch Entry</h2>
                   <span className="rounded-full bg-brand-1/10 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-brand-1">
                     ENTRY
                   </span>
@@ -182,15 +182,15 @@ export default function Home() {
 
           {/* ── HISTORY TAB ─── */}
           {activeTab === "HISTORY" && (
-            <div className="rounded-3xl border border-border bg-white p-8 shadow-card space-y-6">
+            <div className="rounded-2xl md:rounded-3xl border border-border bg-white p-4 md:p-8 shadow-card space-y-5 md:space-y-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-xl font-semibold text-brand-1">Batch History</h2>
-                  <p className="mt-1 text-sm text-muted">Latest 25 printed batches</p>
+                  <h2 className="text-lg md:text-xl font-semibold text-brand-1">Batch History</h2>
+                  <p className="mt-1 text-xs md:text-sm text-muted">Latest 25 printed batches</p>
                 </div>
                 <button
                   onClick={loadHistory}
-                  className="rounded-full border border-brand-1 bg-brand-1 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-white hover:bg-brand-1/90 transition-colors"
+                  className="rounded-full border border-brand-1 bg-brand-1 px-3 md:px-4 py-2 text-xs font-semibold uppercase tracking-widest text-white hover:bg-brand-1/90 transition-colors"
                 >
                   Refresh
                 </button>

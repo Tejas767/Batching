@@ -39,7 +39,7 @@ export function BatchEntryForm({ entry, onUpdateField, onStart, onStop, onPrint,
       variants={containerVariants}
       initial="hidden"
       animate="show"
-      className="grid gap-4 md:grid-cols-2"
+      className="grid gap-4 grid-cols-1 md:grid-cols-2"
     >
       {FIELDS.map(({ label, key, type }) => {
         const value = entry[key];
