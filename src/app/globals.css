@@ -1,0 +1,106 @@
+@import "tailwindcss";
+
+/* ───────────────────────────────────────────────
+   Design Tokens — Single source of truth
+   ─────────────────────────────────────────────── */
+:root {
+  /* Brand palette */
+  --brand-1:   #0f3d3e;  /* Deep teal */
+  --brand-2:   #f1b24a;  /* Warm gold */
+  --brand-3:   #e65d3d;  /* Accent red */
+
+  /* Surface & background */
+  --background: #f8f5f0;
+  --surface:    #faf8f4;
+  --foreground: #151513;
+  --muted:      #7a6a5a;
+  --border:     #e4dacb;
+
+  /* Shadows */
+  --shadow-card:    0 8px 30px rgba(30, 25, 20, 0.08);
+  --shadow-card-lg: 0 20px 60px rgba(15, 15, 10, 0.14);
+}
+
+/* ───────────────────────────────────────────────
+   Tailwind v4 Inline Theme
+   ─────────────────────────────────────────────── */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface:    var(--surface);
+  --color-brand-1:    var(--brand-1);
+  --color-brand-2:    var(--brand-2);
+  --color-brand-3:    var(--brand-3);
+  --color-border:     var(--border);
+  --color-muted:      var(--muted);
+
+  --font-sans: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-mono), ui-monospace, monospace;
+
+  --shadow-card:    var(--shadow-card);
+  --shadow-card-lg: var(--shadow-card-lg);
+}
+
+/* ───────────────────────────────────────────────
+   Base Styles
+   ─────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  line-height: 1.6;
+}
+
+::selection {
+  background: var(--brand-1);
+  color: #fff;
+}
+
+/* ───────────────────────────────────────────────
+   Utility – Page Gradient
+   ─────────────────────────────────────────────── */
+.bg-page-gradient {
+  background: radial-gradient(
+    ellipse at 30% 0%,
+    #ffffff 0%,
+    #f3efe8 50%,
+    #efe7da 100%
+  );
+}
+
+/* ───────────────────────────────────────────────
+   Utility – Scrollbar
+   ─────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: #c8b8a4;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--brand-1);
+}
+
+/* ───────────────────────────────────────────────
+   Print Utilities
+   ─────────────────────────────────────────────── */
+@media print {
+  @page {
+    size: A4;
+    margin: 1cm;
+  }
+  body, html {
+    background-color: white !important;
+    background: white !important;
+  }
+}
