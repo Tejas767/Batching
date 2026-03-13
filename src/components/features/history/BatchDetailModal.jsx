@@ -36,7 +36,7 @@ export function BatchDetailModal({ record, onClose }) {
             entry={entry}
             targets={targets}
             reportData={reportData}
-            onPrint={() => typeof window !== "undefined" && window.print()}
+            hideActions={true}
           />
         </div>
       </div>

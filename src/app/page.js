@@ -175,8 +175,9 @@ export default function Home() {
               entry={entry}
               targets={targets}
               reportData={reportData}
-              onPrint={() => typeof window !== "undefined" && window.print()}
+              onPrint={handlePrint}
               onSaveToHistory={handleSaveToHistory}
+              onUpdateField={updateField}
             />
           )}
 
@@ -186,7 +187,7 @@ export default function Home() {
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-lg md:text-xl font-semibold text-brand-1">Batch History</h2>
-                  <p className="mt-1 text-xs md:text-sm text-muted">Latest 25 printed batches</p>
+                  <p className="mt-1 text-xs md:text-sm text-muted">Showing recent printed batches</p>
                 </div>
                 <button
                   onClick={loadHistory}

@@ -1,12 +1,12 @@
 /**
- * useBatchEntry.js — Custom hook configured for local-only state (No DB).
+ * useBatchEntry.js — Purely in-memory state.
  *
- * This version removes all database persistence to avoid networking errors.
- * Data is still mirrored to localStorage so it survives page refreshes.
+ * Data is no longer mirrored to localStorage.
+ * This ensures no data is left behind on the user's computer.
  */
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 
 const defaultEntry = {
   docketNo: "",
@@ -18,28 +18,11 @@ const defaultEntry = {
   truckNumber: "",
   batchStart: "",
   batchStop: "",
+  plantSN: "3851",
 };
 
 export function useBatchEntry() {
   const [entry, setEntry] = useState(defaultEntry);
-
-  // Load from localStorage on mount
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const stored = window.localStorage.getItem("entryData");
-    if (stored) {
-      try { 
-        setEntry(JSON.parse(stored)); 
-      } catch (_) { /* ignore */ }
-    }
-  }, []);
-
-  // Mirror to localStorage whenever entry changes
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    window.localStorage.setItem("entryData", JSON.stringify(entry));
-  }, [entry]);
 
   // Update a single field
   const updateField = useCallback((key, value) => {

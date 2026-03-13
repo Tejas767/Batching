@@ -44,12 +44,12 @@ export async function verifyToken(token) {
 }
 
 /**
- * Create a session cookie
+ * Create a session cookie with user info in the JWT
  */
-export async function setSessionCookie(userId, email, name) {
-  const payload = { id: userId, email, name };
+export async function setSessionCookie(userId, username, role) {
+  const payload = { id: userId, username, role };
   const token = await signToken(payload);
-  
+
   const cookieStore = await cookies();
   cookieStore.set("session", token, {
     httpOnly: true,

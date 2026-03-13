@@ -1,36 +1,21 @@
 /**
- * useMixDesign.js — Custom hook configured for local-only state (No DB).
+ * useMixDesign.js — Purely in-memory state.
  *
- * This version removes all database persistence to avoid networking errors.
- * Data is still saved to localStorage so it survives page refreshes.
+ * Data is no longer mirrored to localStorage.
+ * Everything resets to defaults on refresh until we connect to MongoDB.
  */
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { initialMixDesign } from "@/constants/mixConfig";
 
 export function useMixDesign() {
   const [mixDesign, setMixDesign] = useState(initialMixDesign);
   const [syncMessage, setSyncMessage] = useState("");
 
-  // Load mix design from localStorage on mount
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const stored = window.localStorage.getItem("mixDesign");
-      if (stored) {
-        try { 
-          setMixDesign(JSON.parse(stored)); 
-        } catch (_) { /* ignore */ }
-      }
-    }
-  }, []);
-
-  // Save to localStorage
+  // Save - temporarily showing a message
   const saveMixDesign = useCallback((design) => {
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem("mixDesign", JSON.stringify(design));
-    }
-    setSyncMessage("Saved locally");
+    setSyncMessage("Saved to memory");
     setTimeout(() => setSyncMessage(""), 2000);
   }, []);
 
@@ -44,12 +29,16 @@ export function useMixDesign() {
 
   const resetMixDesign = useCallback(() => {
     setMixDesign(initialMixDesign);
-    if (typeof window !== "undefined") {
-      window.localStorage.removeItem("mixDesign");
-    }
     setSyncMessage("Reset to defaults");
     setTimeout(() => setSyncMessage(""), 2000);
   }, []);
 
-  return { mixDesign, syncMessage, saveMixDesign, updateCell, resetMixDesign };
+  return { 
+    mixDesign, 
+    syncMessage, 
+    loadMixDesign: () => {}, 
+    saveMixDesign, 
+    updateCell, 
+    resetMixDesign 
+  };
 }
