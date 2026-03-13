@@ -52,6 +52,7 @@ const tabVariants = {
    Home — the page orchestrator
 ════════════════════════════════════════════════ */
 export default function Home() {
+  const { user, isLoaded, isSignedIn, signOut } = useSession({ redirectTo: "/login" });
   const [activeTab, setActiveTab] = useState("ENTRY");
   const [deleteId, setDeleteId] = useState(null);
   const [showClearAll, setShowClearAll] = useState(false);
@@ -113,7 +114,17 @@ export default function Home() {
     });
   };
 
+  // 1. Loading state (Checking session...)
+  if (!isLoaded) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#FDFCF7]">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-1 border-t-transparent" />
+      </div>
+    );
+  }
 
+  // 2. Auth Guard — If not signed in, show nothing while background redirect happens
+  if (!isSignedIn) return null;
 
   // ── Main authenticated app ───────────────────
   return (

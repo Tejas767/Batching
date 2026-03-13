@@ -50,6 +50,17 @@ export function AppHeader() {
                 <Shield size={11} /> Admin
               </Link>
             )}
+            {/* Subscription Days (Always visible) */}
+            {daysRemaining !== null && (
+              <div className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${
+                daysRemaining <= 5 ? "bg-red-50 border-red-200 text-red-700" :
+                daysRemaining <= 15 ? "bg-amber-50 border-amber-200 text-amber-700" :
+                "bg-emerald-50 border-emerald-200 text-emerald-700"
+              }`}>
+                {daysRemaining === 0 ? "Expired" : `${daysRemaining} Days Left`}
+              </div>
+            )}
+
             {/* Username */}
             <div className="rounded-full border border-border bg-surface px-3 py-1.5">
               <span className="text-xs font-semibold text-brand-1">

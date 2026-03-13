@@ -14,6 +14,10 @@ export function useSession({ redirectTo = "", redirectIfFound = false } = {}) {
       if (res.ok) {
         const json = await res.json();
         setUser(json.data);
+      } else if (res.status === 403) {
+        // Force logout if forbidden (account deactivated)
+        await fetch("/api/auth/logout", { method: "POST" });
+        setUser(null);
       } else {
         setUser(null);
       }
@@ -26,6 +30,18 @@ export function useSession({ redirectTo = "", redirectIfFound = false } = {}) {
 
   useEffect(() => {
     fetchSession();
+
+    // Re-verify on focus (handles account deactivation in another tab)
+    const onFocus = () => fetchSession();
+    window.addEventListener("focus", onFocus);
+
+    // Background poll every 3 minutes for long sessions
+    const interval = setInterval(fetchSession, 180000);
+
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      clearInterval(interval);
+    };
   }, [fetchSession]);
 
   useEffect(() => {
@@ -34,10 +50,10 @@ export function useSession({ redirectTo = "", redirectIfFound = false } = {}) {
     // Redirect behavior
     if (!user && redirectTo && !redirectIfFound) {
       // Not logged in, but we require auth
-      router.push(redirectTo);
+      router.replace(redirectTo);
     } else if (user && redirectTo && redirectIfFound) {
       // Logged in, but we shouldn't be here (e.g. login page)
-      router.push(redirectTo);
+      router.replace(redirectTo);
     }
   }, [user, isLoaded, redirectTo, redirectIfFound, router]);
 

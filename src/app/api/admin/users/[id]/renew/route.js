@@ -22,10 +22,10 @@ export async function POST(request, { params }) {
     await connectDB();
 
     const { id } = await params;
-    const { days } = await request.json();
+    const { days, mode = "add" } = await request.json();
 
-    if (!days || Number(days) <= 0) {
-      return Response.json({ error: "days must be a positive number" }, { status: 400 });
+    if (!days || Number(days) < 0) {
+      return Response.json({ error: "days must be a non-negative number" }, { status: 400 });
     }
 
     const user = await User.findById(id);
@@ -35,16 +35,22 @@ export async function POST(request, { params }) {
 
     const daysNum = Number(days);
 
-    // Extend from current expiry if still future, else start from today
-    const base = user.expiresAt && user.expiresAt > new Date()
-      ? user.expiresAt
-      : new Date();
+    let newExpiry;
+    if (mode === "set") {
+      // Set total days from NOW
+      newExpiry = new Date(Date.now() + daysNum * 86400000);
+      user.subscriptionDays = daysNum;
+    } else {
+      // Add to current expiry if active, else start from today
+      const base = user.expiresAt && user.expiresAt > new Date()
+        ? user.expiresAt
+        : new Date();
+      newExpiry = new Date(base.getTime() + daysNum * 86400000);
+      user.subscriptionDays = (user.subscriptionDays || 0) + daysNum;
+    }
 
-    const newExpiry = new Date(base.getTime() + daysNum * 86400000);
-
-    user.expiresAt       = newExpiry;
-    user.subscriptionDays = (user.subscriptionDays || 0) + daysNum;
-    user.isActive        = true; // always re-enable on renewal
+    user.expiresAt = newExpiry;
+    user.isActive  = true; // always re-enable on renewal
     await user.save();
 
     const daysRemaining = Math.max(0, Math.ceil((newExpiry - Date.now()) / 86400000));

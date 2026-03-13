@@ -4,9 +4,10 @@ import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Users, Plus, ToggleLeft, ToggleRight, RefreshCw,
-  KeyRound, Trash2, CalendarDays, Shield, LogOut, ChevronDown, AlertCircle
+  KeyRound, Trash2, CalendarDays, Shield, LogOut, ChevronDown, AlertCircle, Eye, EyeOff
 } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { useSession } from "@/hooks/useSession";
 
 // ── Subscription preset options ───────────────────────────────
 const PRESETS = [
@@ -33,6 +34,7 @@ function formatDate(d) {
 function CreateUserModal({ onClose, onCreated }) {
   const [form, setForm]     = useState({ username: "", password: "", displayName: "", subscriptionDays: 30, notes: "" });
   const [custom, setCustom] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError]   = useState("");
 
@@ -40,6 +42,10 @@ function CreateUserModal({ onClose, onCreated }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (form.password.length < 6) {
+      setError("Password must be at least 6 characters long");
+      return;
+    }
     setError(""); setLoading(true);
     try {
       const res = await fetch("/api/admin/users", {
@@ -74,8 +80,24 @@ function CreateUserModal({ onClose, onCreated }) {
           </Field>
           {/* Password */}
           <Field label="Password" required>
-            <input required type="password" value={form.password} onChange={e=>set("password",e.target.value)}
-              placeholder="••••••••" className={inputCls} />
+            <div className="relative">
+              <input 
+                required 
+                type={showPassword ? "text" : "password"} 
+                value={form.password} 
+                onChange={e=>set("password",e.target.value)}
+                placeholder="Min. 6 characters" 
+                className={`${inputCls} pr-12`} 
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-brand-1 transition-colors"
+                title={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </Field>
           {/* Subscription */}
           <Field label="Subscription Period">
@@ -109,7 +131,16 @@ function CreateUserModal({ onClose, onCreated }) {
               placeholder="Any notes about this user" className={inputCls} />
           </Field>
 
-          {error && <p className="text-sm text-red-600 bg-red-50 rounded-xl px-4 py-2">{error}</p>}
+          {error && (
+            <motion.div 
+              initial={{ opacity: 0, y: -10 }} 
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center gap-2 rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-600 border border-red-100"
+            >
+              <AlertCircle size={16} />
+              {error}
+            </motion.div>
+          )}
 
           <div className="flex gap-3 pt-2">
             <button type="button" onClick={onClose}
@@ -127,9 +158,10 @@ function CreateUserModal({ onClose, onCreated }) {
   );
 }
 
-// ── Modal: Renew Subscription ─────────────────────────────────
+// ── Modal: Manage Subscription ───────────────────────────────
 function RenewModal({ user, onClose, onRenewed }) {
   const [days, setDays]       = useState(30);
+  const [mode, setMode]       = useState("add"); // "add" or "set"
   const [custom, setCustom]   = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState("");
@@ -140,7 +172,7 @@ function RenewModal({ user, onClose, onRenewed }) {
       const res = await fetch(`/api/admin/users/${user.id}/renew`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ days }),
+        body: JSON.stringify({ days, mode }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed");
@@ -155,8 +187,20 @@ function RenewModal({ user, onClose, onRenewed }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
       <motion.div initial={{ opacity:0,scale:0.95 }} animate={{ opacity:1,scale:1 }} exit={{ opacity:0,scale:0.95 }}
         className="w-full max-w-sm rounded-3xl bg-white p-8 shadow-card-lg">
-        <h2 className="text-xl font-semibold text-brand-1 mb-1 flex items-center gap-2"><CalendarDays size={18}/> Renew Subscription</h2>
+        <h2 className="text-xl font-semibold text-brand-1 mb-1 flex items-center gap-2"><CalendarDays size={18}/> Manage Subscription</h2>
         <p className="text-sm text-muted mb-6">User: <strong>{user.username}</strong></p>
+
+        {/* Mode Toggle */}
+        <div className="flex p-1 bg-surface rounded-xl mb-6 border border-border">
+          <button onClick={() => setMode("add")}
+            className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-colors ${mode === "add" ? "bg-white text-brand-1 shadow-sm border border-border" : "text-muted hover:text-brand-1"}`}>
+            Add Days
+          </button>
+          <button onClick={() => setMode("set")}
+            className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-colors ${mode === "set" ? "bg-white text-brand-1 shadow-sm border border-border" : "text-muted hover:text-brand-1"}`}>
+            Set Total Days
+          </button>
+        </div>
 
         <div className="flex flex-wrap gap-2 mb-4">
           {PRESETS.map(p=>(
@@ -176,10 +220,16 @@ function RenewModal({ user, onClose, onRenewed }) {
           </button>
         </div>
         {custom && (
-          <input type="number" min="1" value={days} onChange={e=>setDays(Number(e.target.value))}
+          <input type="number" min="0" value={days} onChange={e=>setDays(Number(e.target.value))}
             placeholder="Enter days" className={`${inputCls} mb-3`} />
         )}
-        <p className="text-xs text-muted mb-4">Adding <strong>{days} days</strong> to the subscription.</p>
+        
+        <p className="text-xs text-muted mb-6">
+          {mode === "add" 
+            ? `Extending existing subscription by adding `
+            : `Overriding total remaining time to `}
+          <strong>{days} days</strong>.
+        </p>
 
         {error && <p className="text-sm text-red-600 bg-red-50 rounded-xl px-4 py-2 mb-3">{error}</p>}
 
@@ -189,8 +239,8 @@ function RenewModal({ user, onClose, onRenewed }) {
             Cancel
           </button>
           <button onClick={handleRenew} disabled={loading}
-            className="flex-1 rounded-xl bg-emerald-600 py-3 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60 transition-colors">
-            {loading ? "Renewing…" : `Add ${days} Days`}
+            className={`flex-1 rounded-xl py-3 text-sm font-semibold text-white disabled:opacity-60 transition-colors ${mode === "add" ? "bg-emerald-600 hover:bg-emerald-700" : "bg-brand-1 hover:bg-brand-1/90"}`}>
+            {loading ? "Updating…" : mode === "add" ? `Add ${days} Days` : `Set to ${days} Days`}
           </button>
         </div>
       </motion.div>
@@ -201,6 +251,7 @@ function RenewModal({ user, onClose, onRenewed }) {
 // ── Modal: Reset Password ─────────────────────────────────────
 function ResetPasswordModal({ user, onClose }) {
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading]   = useState(false);
   const [success, setSuccess]   = useState(false);
   const [error, setError]       = useState("");
@@ -237,9 +288,33 @@ function ResetPasswordModal({ user, onClose }) {
           </div>
         ) : (
           <>
-            <input type="text" value={password} onChange={e=>setPassword(e.target.value)}
-              placeholder="New password" className={`${inputCls} mb-3`} />
-            {error && <p className="text-sm text-red-600 mb-3">{error}</p>}
+            <div className="relative mb-3">
+              <input 
+                type={showPassword ? "text" : "password"} 
+                value={password} 
+                onChange={e=>setPassword(e.target.value)}
+                placeholder="Min. 6 characters" 
+                className={`${inputCls} pr-12`} 
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-brand-1 transition-colors"
+                title={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+            {error && (
+              <motion.div 
+                initial={{ opacity: 0, y: -10 }} 
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center gap-2 rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-600 border border-red-100 mb-4"
+              >
+                <AlertCircle size={16} />
+                {error}
+              </motion.div>
+            )}
             <div className="flex gap-3">
               <button onClick={onClose}
                 className="flex-1 rounded-xl border border-border py-3 text-sm font-semibold text-stone-600 hover:bg-surface transition-colors">
@@ -273,6 +348,7 @@ function Field({ label, required, children }) {
 
 // ── Main Admin Page ───────────────────────────────────────────
 export default function AdminPage() {
+  const { user, isLoaded, isSignedIn } = useSession({ redirectTo: "/login" });
   const [users, setUsers]         = useState([]);
   const [loading, setLoading]     = useState(true);
   const [showCreate, setShowCreate] = useState(false);
@@ -282,6 +358,8 @@ export default function AdminPage() {
   const [togglingId, setTogglingId] = useState(null);
 
   const loadUsers = useCallback(async () => {
+    // Only load if initialized and admin
+    if (!isSignedIn || user?.role !== "admin") return;
     setLoading(true);
     try {
       const res = await fetch("/api/admin/users");
@@ -292,7 +370,7 @@ export default function AdminPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [isSignedIn, user]);
 
   useEffect(() => { loadUsers(); }, [loadUsers]);
 
@@ -321,6 +399,18 @@ export default function AdminPage() {
     setUsers(prev => prev.filter(u => u.id !== deleteUser.id));
     setDeleteUser(null);
   };
+
+  if (!isLoaded) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#FDFCF7]">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-1 border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (!isSignedIn || user?.role !== "admin") {
+    return null; // Redirect handled by useSession
+  }
 
   const handleLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
