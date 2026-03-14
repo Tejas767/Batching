@@ -40,37 +40,61 @@ export function AppHeader() {
           </p>
         </div>
 
-        {/* Right side: user chip + logout */}
+        {/* Right side: User Identity & Actions */}
         {user && (
-          <div className="flex items-center gap-2 self-start md:self-auto">
-            {/* Admin panel link */}
-            {isAdmin && (
-              <Link href="/admin"
-                className="flex items-center gap-1.5 rounded-full border border-brand-1/30 bg-brand-1/10 px-3 py-1.5 text-xs font-semibold text-brand-1 hover:bg-brand-1/20 transition-colors">
-                <Shield size={11} /> Admin
-              </Link>
-            )}
+          <div className="flex items-center gap-3 self-start md:self-auto">
+            {/* Identity Chip */}
+            <div className="flex items-center">
+              {isAdmin ? (
+                <Link href="/admin"
+                  className="flex items-center gap-2.5 rounded-full border border-brand-1/30 bg-brand-1/10 p-1 pr-4 hover:bg-brand-1/20 transition-all group"
+                  title="Go to Admin Panel">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-1 text-[#f1b24a] shadow-sm group-hover:scale-105 transition-transform">
+                    <Shield size={16} fill="currentColor" fillOpacity={0.2} />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-brand-1/60 leading-none mb-0.5">Administrator</span>
+                    <span className="text-[13px] font-bold text-brand-1 leading-none">
+                      {user.displayName || user.username}
+                    </span>
+                  </div>
+                </Link>
+              ) : (
+                <div className="flex items-center gap-2.5 rounded-full border border-border bg-surface p-1 pr-4">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-stone-100 text-brand-1 font-bold text-xs border border-border shadow-sm">
+                    {(user.displayName || user.username)[0].toUpperCase()}
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-muted leading-none mb-0.5">Operator</span>
+                    <span className="text-[13px] font-bold text-stone-700 leading-none">
+                      {user.displayName || user.username}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* Subscription Days (Always visible) */}
             {daysRemaining !== null && (
-              <div className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${
+              <div className={`hidden sm:flex items-center gap-1.5 rounded-full border px-3 py-2 text-xs font-bold shadow-sm ${
                 daysRemaining <= 5 ? "bg-red-50 border-red-200 text-red-700" :
                 daysRemaining <= 15 ? "bg-amber-50 border-amber-200 text-amber-700" :
                 "bg-emerald-50 border-emerald-200 text-emerald-700"
               }`}>
+                <div className={`h-1.5 w-1.5 rounded-full animate-pulse ${
+                  daysRemaining <= 5 ? "bg-red-500" :
+                  daysRemaining <= 15 ? "bg-amber-500" :
+                  "bg-emerald-500"
+                }`} />
                 {daysRemaining === 0 ? "Expired" : `${daysRemaining} Days Left`}
               </div>
             )}
 
-            {/* Username */}
-            <div className="rounded-full border border-border bg-surface px-3 py-1.5">
-              <span className="text-xs font-semibold text-brand-1">
-                {user.displayName || user.username}
-              </span>
-            </div>
             {/* Logout */}
             <button onClick={signOut}
-              className="flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-100 transition-colors">
-              <LogOut size={11} /> Logout
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-red-100 bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-600 transition-all hover:scale-105 shadow-sm"
+              title="Logout">
+              <LogOut size={18} />
             </button>
           </div>
         )}
