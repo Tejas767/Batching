@@ -30,13 +30,13 @@ function randBetween(rng, min, max) {
   return Math.floor(rng() * (max - min + 1)) + min;
 }
 
-export function useReportData(entry, targets) {
+export function useReportData(entry, targets, batchSize = 0.5, differences = {}) {
   return useMemo(() => {
     const seed = hashSeed(`${entry.docketNo}-${entry.customerName}-${entry.grade}-${entry.qty}`);
     const rng = mulberry32(seed);
 
     const productionQty = Number(entry.qty || 0);
-    const capacity = MIXER_CAPACITY;
+    const capacity = Number(batchSize || 0.5);
     
     // TotalBatches = Fix(ProdQty / Capacity)
     let totalBatches = 0;
@@ -45,63 +45,66 @@ export function useReportData(entry, targets) {
     }
 
     const rows = [];
+    const diff = (key) => Number(differences[key] || 0);
 
     for (let i = 0; i < totalBatches; i += 1) {
       const row = { id: i + 1 };
       
-      // Parse targets safely
-      const tRSan   = Number(targets.rSan) || 0;
-      const tCSan   = Number(targets.cSan) || 0;
-      const t20mm   = Number(targets.mm20) || 0;
-      const t10mm   = Number(targets.mm10) || 0;
-      const tCem1   = Number(targets.cem1) || 0;
+      const tMM10   = Number(targets.mm10) || 0;
+      const tCSAN   = Number(targets.cSan) || 0;
+      const tCSAND  = Number(targets.cSand) || 0;
+      const tMM20   = Number(targets.mm20) || 0;
+      const tCEM1   = Number(targets.cem1) || 0;
+      const tGGBS   = Number(targets.ggbs) || 0;
       const tFlyAsh = Number(targets.flyAsh) || 0;
+      const tWatIce = Number(targets.watIce) || 0;
       const tWater  = Number(targets.water) || 0;
+      const tSilica = Number(targets.silica) || 0;
       const tAdmix1 = Number(targets.admix1) || 0;
       const tAdmix2 = Number(targets.admix2) || 0;
 
-      // RSAN
-      row.rSan = tRSan > 0 ? tRSan + randBetween(rng, -3, 3) : 0;
-      // CSAN
-      row.cSan = tCSan > 0 ? tCSan + randBetween(rng, -3, 3) : 0;
-      // 20MM
-      row.mm20 = t20mm > 0 ? t20mm + randBetween(rng, -3, 3) : 0;
-      // 10MM
-      row.mm10 = t10mm > 0 ? t10mm + randBetween(rng, -3, 3) : 0;
-      // CEM1
-      row.cem1 = tCem1 > 0 ? tCem1 + randBetween(rng, -2, 2) : 0;
-      // FLYASH
-      row.flyAsh = tFlyAsh > 0 ? tFlyAsh + randBetween(rng, -2, 2) : 0;
-      // WATER
-      row.water = tWater > 0 ? tWater + randBetween(rng, -4, 4) : 0;
-      // ADMIX1
-      row.admix1 = tAdmix1 > 0 ? Number((tAdmix1 + ((rng() - 0.5) * 0.14)).toFixed(2)) : 0.00;
-      // ADMIX2
-      row.admix2 = tAdmix2 > 0 ? Number((tAdmix2 + ((rng() - 0.5) * 0.14)).toFixed(2)) : 0.00;
+      // Variance using dynamic Differences (±)
+      row.mm10 = tMM10 > 0 ? tMM10 + randBetween(rng, -diff('mm10'), diff('mm10')) : 0;
+      row.cSan = tCSAN > 0 ? tCSAN + randBetween(rng, -diff('cSan'), diff('cSan')) : 0;
+      row.moi  = "0.0";
+      row.cSand = tCSAND > 0 ? tCSAND + randBetween(rng, -diff('cSand'), diff('cSand')) : 0;
+      row.mm20 = tMM20 > 0 ? tMM20 + randBetween(rng, -diff('mm20'), diff('mm20')) : 0;
 
-      // Empty/zero columns
-      row.moi = "";
-      row.zero1 = 0;
-      row.zero2 = 0;
-      row.pm = 0;
-      row.zero3 = 0;
-      row.zero4 = 0;
+      row.cem1   = tCEM1 > 0 ? tCEM1 + randBetween(rng, -diff('cem1'), diff('cem1')) : 0;
+      row.ggbs   = tGGBS > 0 ? tGGBS + randBetween(rng, -diff('ggbs'), diff('ggbs')) : 0;
+      row.flyAsh = tFlyAsh > 0 ? tFlyAsh + randBetween(rng, -diff('flyAsh'), diff('flyAsh')) : 0;
+
+      row.watIce = tWatIce > 0 ? tWatIce + randBetween(rng, -diff('watIce'), diff('watIce')) : 0;
+      row.pm     = 0;
+      row.water  = tWater > 0 ? tWater + randBetween(rng, -diff('water'), diff('water')) : 0;
+
+      row.silica = tSilica > 0 ? tSilica + randBetween(rng, -diff('silica'), diff('silica')) : 0;
+
+      // Admixtures often have decimal tolerances (e.g. 0.10)
+      const a1Var = diff('admix1');
+      row.admix1 = tAdmix1 > 0 ? Number((tAdmix1 + ((rng() - 0.5) * a1Var * 2)).toFixed(2)) : 0.00;
+      
+      const a2Var = diff('admix2');
+      row.admix2 = tAdmix2 > 0 ? Number((tAdmix2 + ((rng() - 0.5) * a2Var * 2)).toFixed(2)) : 0.00;
 
       rows.push(row);
     }
 
     const totals = {
-      rSan:   rows.reduce((sum, row) => sum + row.rSan, 0),
-      cSan:   rows.reduce((sum, row) => sum + row.cSan, 0),
-      mm20:   rows.reduce((sum, row) => sum + row.mm20, 0),
       mm10:   rows.reduce((sum, row) => sum + row.mm10, 0),
+      cSan:   rows.reduce((sum, row) => sum + row.cSan, 0),
+      cSand:  rows.reduce((sum, row) => sum + row.cSand, 0),
+      mm20:   rows.reduce((sum, row) => sum + row.mm20, 0),
       cem1:   rows.reduce((sum, row) => sum + row.cem1, 0),
+      ggbs:   rows.reduce((sum, row) => sum + row.ggbs, 0),
       flyAsh: rows.reduce((sum, row) => sum + row.flyAsh, 0),
+      watIce: rows.reduce((sum, row) => sum + row.watIce, 0),
       water:  rows.reduce((sum, row) => sum + row.water, 0),
+      silica: rows.reduce((sum, row) => sum + row.silica, 0),
       admix1: rows.reduce((sum, row) => sum + row.admix1, 0),
       admix2: rows.reduce((sum, row) => sum + row.admix2, 0),
     };
 
     return { rows, totals, totalBatches, productionQty };
-  }, [entry, targets]);
+  }, [entry, targets, batchSize, differences]);
 }

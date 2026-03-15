@@ -21,8 +21,9 @@ export function useBatchHistory() {
     setLoading(true);
     try {
       const params = new URLSearchParams();
-      if (historyFrom) params.set("from", historyFrom);
-      if (historyTo)   params.set("to",   historyTo);
+      if (historyFrom)      params.set("from",   historyFrom);
+      if (historyTo)        params.set("to",     historyTo);
+      if (historyQuery.trim()) params.set("search", historyQuery);
 
       const res  = await fetch(`/api/history?${params.toString()}`);
       const data = await res.json();
@@ -32,10 +33,16 @@ export function useBatchHistory() {
     } finally {
       setLoading(false);
     }
-  }, [historyFrom, historyTo]);
+  }, [historyFrom, historyTo, historyQuery]);
 
-  // Load on mount
-  useEffect(() => { loadHistory(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // Debounced Effect: Only load history after the user stops typing for 500ms
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      loadHistory();
+    }, 500);
+
+    return () => clearTimeout(handler);
+  }, [historyFrom, historyTo, historyQuery, loadHistory]);
 
   // ── Save a batch record to MongoDB ───────────────────────────
   const saveToHistory = useCallback(async (data) => {
@@ -99,18 +106,8 @@ export function useBatchHistory() {
     setHistoryTo("");
   }, []);
 
-  // ── Client-side search filter (date filter is server-side) ───
-  const filteredHistory = useMemo(() => {
-    if (!historyQuery.trim()) return history;
-    const q = historyQuery.toLowerCase();
-    return history.filter((row) =>
-      String(row.docketNo     || "").toLowerCase().includes(q) ||
-      String(row.customerName || "").toLowerCase().includes(q) ||
-      String(row.grade        || "").toLowerCase().includes(q) ||
-      String(row.site         || "").toLowerCase().includes(q) ||
-      String(row.truckNumber  || "").toLowerCase().includes(q)
-    );
-  }, [history, historyQuery]);
+  // No local filtering needed anymore, constant reference for compatibility
+  const filteredHistory = history;
 
   return {
     history,

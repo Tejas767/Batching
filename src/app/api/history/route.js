@@ -22,8 +22,9 @@ export async function GET(request) {
     await connectDB();
 
     const { searchParams } = new URL(request.url);
-    const from = searchParams.get("from");
-    const to   = searchParams.get("to");
+    const from   = searchParams.get("from");
+    const to     = searchParams.get("to");
+    const search = searchParams.get("search");
 
     const query = { userId: session.id };
 
@@ -31,6 +32,17 @@ export async function GET(request) {
       query.createdAt = {};
       if (from) query.createdAt.$gte = new Date(from);
       if (to)   query.createdAt.$lte = new Date(to + "T23:59:59.999Z");
+    }
+
+    if (search) {
+      const s = { $regex: search, $options: "i" };
+      query.$or = [
+        { docketNo: s },
+        { customerName: s },
+        { site: s },
+        { grade: s },
+        { truckNumber: s },
+      ];
     }
 
     const records = await BatchRecord
@@ -90,7 +102,7 @@ export async function POST(request) {
       batchStart:   item.batchStart   ?? "",
       batchStop:    item.batchStop    ?? "",
       mixDesign:    item.mixDesign    ?? {},
-      reportRows:   item.reportRows   ?? [],
+      reportRows:   item.reportRows   ?? item.rows ?? [],
       totals:       item.totals       ?? {},
     });
 

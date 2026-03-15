@@ -38,6 +38,7 @@ export async function GET() {
         displayName:   user.displayName || user.username,
         role:          user.role,
         isActive:      user.isActive,
+        plantSN:       user.plantSN || "", 
         daysRemaining: user.expiresAt
           ? Math.max(0, Math.ceil((new Date(user.expiresAt) - Date.now()) / 86400000))
           : null,

@@ -29,6 +29,8 @@ import { AutographicReport, HiddenPrintReport } from "@/components/features/repo
 import { BatchHistoryFilters }  from "@/components/features/history/BatchHistoryFilters";
 import { BatchHistoryTable }    from "@/components/features/history/BatchHistoryTable";
 import { BatchDetailModal }     from "@/components/features/history/BatchDetailModal";
+import { CustomerManager }      from "@/components/features/customers/CustomerManager";
+import { VehicleManager }       from "@/components/features/vehicles/VehicleManager";
 import { ConfirmDialog }        from "@/components/ui/ConfirmDialog";
 
 // Hooks (all logic lives here)
@@ -37,6 +39,8 @@ import { useMixDesign }    from "@/hooks/useMixDesign";
 import { useBatchEntry }   from "@/hooks/useBatchEntry";
 import { useBatchHistory } from "@/hooks/useBatchHistory";
 import { useReportData }   from "@/hooks/useReportData";
+import { useCustomers }    from "@/hooks/useCustomers";
+import { useVehicles }     from "@/hooks/useVehicles";
 
 // Constants
 import { initialMixDesign } from "@/constants/mixConfig";
@@ -56,14 +60,23 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState("ENTRY");
   const [deleteId, setDeleteId] = useState(null);
   const [showClearAll, setShowClearAll] = useState(false);
+  const [lastBatch, setLastBatch] = useState(null);
 
   // ── Data / Logic hooks ──────────────────────
   const {
-    mixDesign, syncMessage,
-    loadMixDesign, saveMixDesign, updateCell, resetMixDesign,
+    mixDesign, batchSize, differences, syncMessage,
+    loadMixDesign, saveMixDesign, updateCell, updateBatchSize, updateDifference, resetMixDesign,
   } = useMixDesign();
 
-  const { entry, updateField, handleStart, handleStop, incrementDocketNo } = useBatchEntry();
+  const { entry, updateField, handleStart, handleStop, incrementDocketNo, resetForm } = useBatchEntry(user);
+
+  const {
+    customers, addCustomer, deleteCustomer, deleteAllCustomers, loading: customersLoading
+  } = useCustomers();
+
+  const {
+    vehicles, addVehicle, deleteVehicle, deleteAllVehicles, loading: vehiclesLoading
+  } = useVehicles();
 
   const {
     filteredHistory, historyQuery, setHistoryQuery,
@@ -77,40 +90,77 @@ export default function Home() {
   const targets = mixDesign[entry.grade] || mixDesign.M15 || initialMixDesign.M15;
 
   // Report data computed deterministically from entry + targets
-  const reportData = useReportData(entry, targets);
+  const reportData = useReportData(entry, targets, batchSize, differences);
 
   // Data is loaded automatically by the hooks on mount.
   useEffect(() => {
     // No-op - data loading is internal to hooks now
   }, []);
 
-  // ── Print handler ───────────────────────────
+  // ── Print / Stop handler ───────────────────────────
   const handlePrint = () => {
-    // Save to history first, then print the always-mounted HiddenPrintReport
-    saveToHistory({
+    const dataToPrint = lastBatch || {
       ...entry,
       mixDesign: targets,
       reportRows: reportData.rows,
       totals: reportData.totals,
-    }).then(loadHistory);
+    };
+
+    saveToHistory(dataToPrint).then(loadHistory);
     if (typeof window !== "undefined") {
       setTimeout(() => {
         window.print();
-        incrementDocketNo();
+        // If printing from report tab after a stop, we've already incremented
+        if (activeTab === "ENTRY") resetForm();
       }, 200);
     }
   };
 
+  const onStopBatch = () => {
+    const time = new Date().toLocaleTimeString("en-US", {
+      hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true,
+    });
+    
+    // 1. Capture final state for the report
+    const finalEntry = { ...entry, batchStop: time };
+    const finalTargets = mixDesign[finalEntry.grade] || mixDesign.M15 || initialMixDesign.M15;
+    
+    const batchData = {
+      ...finalEntry,
+      mixDesign: finalTargets,
+      rows: reportData.rows,
+      totals: reportData.totals,
+      totalBatches: reportData.totalBatches
+    };
+
+    setLastBatch(batchData);
+
+    // 2. Auto-save to history
+    saveToHistory(batchData).then(loadHistory);
+
+    // 3. Redirect
+    setActiveTab("REPORT");
+
+    // 4. Clear entry and increment docket
+    resetForm();
+    toast.success(`Batch #${finalEntry.docketNo} stopped and saved to history.`);
+  };
+
   const handleSaveToHistory = () => {
-    saveToHistory({
+    const dataToSave = lastBatch ? lastBatch : {
       ...entry,
       mixDesign: targets,
-      reportRows: reportData.rows,
+      rows: reportData.rows,
       totals: reportData.totals,
-    }).then(() => {
+      totalBatches: reportData.totalBatches
+    };
+
+    saveToHistory(dataToSave).then(() => {
       loadHistory();
-      incrementDocketNo();
-      toast.success(`Docket ${entry.docketNo} saved successfully!`);
+      if (!lastBatch) {
+        incrementDocketNo();
+      }
+      toast.success(`Docket ${dataToSave.docketNo} saved successfully!`);
     });
   };
 
@@ -157,9 +207,11 @@ export default function Home() {
                 </div>
                 <BatchEntryForm
                   entry={entry}
+                  customers={customers}
+                  vehicles={vehicles}
                   onUpdateField={updateField}
                   onStart={handleStart}
-                  onStop={handleStop}
+                  onStop={onStopBatch}
                   onPrint={handlePrint}
                   onSaveToHistory={handleSaveToHistory}
                 />
@@ -167,15 +219,39 @@ export default function Home() {
             </div>
           )}
 
+          {/* ── CUSTOMER TAB ─── */}
+          {activeTab === "CUSTOMERS" && (
+            <CustomerManager
+              customers={customers}
+              onAdd={addCustomer}
+              onDelete={deleteCustomer}
+              onDeleteAll={deleteAllCustomers}
+              loading={customersLoading}
+            />
+          )}
 
+          {/* ── VEHICLE TAB ─── */}
+          {activeTab === "VEHICLE" && (
+            <VehicleManager
+              vehicles={vehicles}
+              onAdd={addVehicle}
+              onDelete={deleteVehicle}
+              onDeleteAll={deleteAllVehicles}
+              loading={vehiclesLoading}
+            />
+          )}
 
-          {/* ── EDIT TAB ─── */}
+          {/* ── MIX DESIGN TAB ─── */}
           {activeTab === "EDIT" && (
             <MixDesignEditor
               mixDesign={mixDesign}
+              batchSize={batchSize}
+              differences={differences}
               syncMessage={syncMessage}
               onUpdateCell={updateCell}
-              onSave={() => saveMixDesign(mixDesign)}
+              onUpdateBatchSize={updateBatchSize}
+              onUpdateDifference={updateDifference}
+              onSave={() => saveMixDesign({ grades: mixDesign, batchSize, differences })}
               onReset={resetMixDesign}
             />
           )}
@@ -183,9 +259,9 @@ export default function Home() {
           {/* ── REPORT TAB ─── */}
           {activeTab === "REPORT" && (
             <AutographicReport
-              entry={entry}
-              targets={targets}
-              reportData={reportData}
+              entry={lastBatch || entry}
+              targets={lastBatch?.mixDesign || targets}
+              reportData={lastBatch || reportData}
               onPrint={handlePrint}
               onSaveToHistory={handleSaveToHistory}
               onUpdateField={updateField}
@@ -263,9 +339,9 @@ export default function Home() {
       />
       {/* Always-mounted hidden print DOM — captured by window.print() regardless of active tab */}
       <HiddenPrintReport
-        entry={entry}
-        targets={targets}
-        reportData={reportData}
+        entry={lastBatch || entry}
+        targets={lastBatch?.mixDesign || targets}
+        reportData={lastBatch || reportData}
       />
     </PageShell>
   );

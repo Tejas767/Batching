@@ -2,6 +2,7 @@
  * AutographicReport.jsx — Feature component.
  *
  * CDD Layer 3: Modern screen UI + Accurate Classic Print Layout.
+ * Updated to match SUPERTECH RMC CHARHOLI layout.
  */
 "use client";
 
@@ -18,8 +19,6 @@ const LOGO_SRC = "/schwing_stetter_logo_clean_1773223963556.png";
 const getTargetDisplay = (colKey, targets) => {
   if (colKey === "moi") return "in%";
   if (colKey === "pm") return "+/-";
-  if (colKey === "zero3") return "   ";
-  if (colKey === "zero1" || colKey === "zero2" || colKey === "zero4") return "0";
   if (colKey === "admix1" || colKey === "admix2") return Number(targets[colKey] || 0).toFixed(2);
   return targets[colKey] || 0;
 };
@@ -27,7 +26,6 @@ const getTargetDisplay = (colKey, targets) => {
 const getActualDisplay = (colKey, val) => {
   if (colKey === "moi") return "0.0";
   if (colKey === "pm") return "0";
-  if (colKey === "zero1" || colKey === "zero2" || colKey === "zero3" || colKey === "zero4") return "0";
   if (colKey === "admix1" || colKey === "admix2") return Number(val || 0).toFixed(2);
   return val || 0;
 };
@@ -37,153 +35,164 @@ const getActualDisplay = (colKey, val) => {
 function ClassicReportLayout({ entry, targets, reportData }) {
   const productionQty = Number(entry.qty || 0);
   const today = new Date().toLocaleDateString("en-GB", {
-    day: "2-digit", month: "short", year: "2-digit"
+    day: "2-digit", month: "short", year: "numeric"
   }).replace(/ /g, "-");
 
   return (
-    <div className="font-sans uppercase text-black leading-snug tracking-tight text-[11px] print:block">
-      {/* Top Header */}
-      <div className="text-center font-bold text-lg mb-2 pt-2 tracking-wide">JANAI INFRACON</div>
-        
-        <div className="relative mb-6">
-          <div className="absolute left-0 top-0 flex items-start flex-col gap-1">
-            <div className="border border-black p-0.5 ml-2">
-              <img src={LOGO_SRC} alt="Logo" className="w-[50px] mix-blend-multiply" />
-            </div>
-            <div className="text-[9px] font-bold leading-none text-center">
-              SCHWING<br/><span className="mt-0.5 block font-normal">Stetter</span>
-            </div>
-          </div>
-          <div className="absolute left-[110px] top-4 font-bold text-xs tracking-wide">
-            MCI 370 Control System Ver 3.1
-          </div>
-          <div className="text-center font-bold text-[13px] pt-14">
-            Docket / Batch Report / AUTOGRAPHIC RECORD
+    <div className="font-sans text-black tracking-tight text-[11.5px] bg-white print:block print:w-full print:max-w-none print:m-0 print:p-0 max-w-[850px] mx-auto p-4">
+      {/* ── HEADER ── */}
+      <div className="text-center font-bold text-[18px] mb-2 uppercase">SUPERTECH RMC CHARHOLI</div>
+      
+      <div className="flex items-start justify-between mb-2">
+        <div className="flex items-start gap-3">
+          <img src={LOGO_SRC} alt="Logo" className="w-[45px] h-[45px] object-contain mix-blend-multiply" />
+          <div className="pt-1">
+             <div className="font-bold text-[13px] leading-tight text-stone-800">MCI 70 N Control System Ver 3.0</div>
+             <div className="text-[10px] font-bold leading-tight mt-0.5 text-stone-700">
+                SCHWING<br/>Stetter
+             </div>
           </div>
         </div>
+      </div>
 
-        {/* Info Block 1 */}
-        <div className="flex justify-between font-bold text-[11px] mb-2">
-          <div className="space-y-[2px]">
-            <div className="flex"><span className="w-40">Batch Date</span><span className="mr-2">:</span><span className="font-normal">{today}</span></div>
-            <div className="flex"><span className="w-40">Batch Start Time</span><span className="mr-2">:</span><span className="font-normal">{entry.batchStart || "12:00:00 AM"}</span></div>
-            <div className="flex"><span className="w-40">Batch End Time</span><span className="mr-2">:</span><span className="font-normal">{entry.batchStop || "12:00:00 AM"}</span></div>
-          </div>
-          <div className="space-y-[2px] pr-12">
-            <div className="flex"><span className="w-48 font-bold">Plant Serial Number</span><span className="font-normal text-right ml-4">{entry.plantSN || "3851"}</span></div>
-          </div>
+      <div className="text-center font-bold text-[13px] mb-6 uppercase tracking-wider">
+        Docket / Batch Report / AUTOGRAPHIC RECORD
+      </div>
+
+      {/* ── INFO SECTION ── */}
+      <div className="grid grid-cols-2 gap-x-12 mb-6">
+        {/* Left Column */}
+        <div className="space-y-0.5">
+          <div className="flex"><span className="font-bold w-48">Batch Date</span><span className="w-4">:</span><span>{today}</span></div>
+          <div className="flex"><span className="font-bold w-48">Batch Start Time</span><span className="w-4">:</span><span>{entry.batchStart || "00:00:00"}</span></div>
+          <div className="flex"><span className="font-bold w-48">Batch End Time</span><span className="w-4">:</span><span>{entry.batchStop || "00:00:00"}</span></div>
+          
+          <div className="h-4"></div>
+
+          <div className="flex"><span className="font-bold w-48">Batch Number / Docket Number</span><span className="w-4">:</span><span>{entry.docketNo || "0"}</span></div>
+          <div className="flex"><span className="font-bold w-48">Customer</span><span className="w-4">:</span><span className="uppercase">{entry.customerName || "—"}</span></div>
+          <div className="flex"><span className="font-bold w-48">Site</span><span className="w-4">:</span><span className="uppercase">{entry.site || "—"}</span></div>
+          <div className="flex"><span className="font-bold w-48">Recipe Code</span><span className="w-4">:</span><span className="uppercase">{entry.grade || "—"}</span></div>
+          <div className="flex"><span className="font-bold w-48">Recipe Name</span><span className="w-4">:</span><span className="uppercase">{entry.grade || "—"}</span></div>
+          <div className="flex"><span className="font-bold w-48">Truck Number</span><span className="w-4">:</span><span className="uppercase">{entry.truckNumber || "—"}</span></div>
+          <div className="flex"><span className="font-bold w-48">Truck Driver</span><span className="w-4">:</span><span className="uppercase">{entry.truckDriver || "—"}</span></div>
+          <div className="flex"><span className="font-bold w-48">Order Number</span><span className="w-4">:</span><span>{entry.grade || "—"}</span></div>
+          <div className="flex"><span className="font-bold w-48">Batcher Name</span><span className="w-4">:</span><span>Stetter</span></div>
         </div>
 
-        {/* Info Block 2 */}
-        <div className="flex justify-between font-bold text-[11px] mb-4">
-          <div className="space-y-[2px]">
-            <div className="flex"><span className="w-48">Batch Number / Docket Number</span><span className="mr-2">:</span><span className="font-normal">{entry.docketNo || "0"}</span></div>
-            <div className="flex"><span className="w-48">Customer</span><span className="mr-2">:</span><span className="font-normal uppercase">{entry.customerName || "0"}</span></div>
-            <div className="flex"><span className="w-48">Site</span><span className="mr-2">:</span><span className="font-normal uppercase">{entry.site || "0"}</span></div>
-            <div className="flex"><span className="w-48">Recipe Code</span><span className="mr-2">:</span><span className="font-normal uppercase">{entry.grade || "0"}</span></div>
-            <div className="flex"><span className="w-48">Recipe Name</span><span className="mr-2">:</span><span className="font-normal uppercase">{entry.grade || "0"}</span></div>
-            <div className="flex"><span className="w-48">Truck Number</span><span className="mr-2">:</span><span className="font-normal uppercase">{entry.truckNumber || "0"}</span></div>
-            <div className="flex"><span className="w-48">Truck Driver</span><span className="mr-2">:</span><span className="font-normal uppercase">{entry.truckDriver || "0"}</span></div>
-            <div className="flex"><span className="w-48">Order Number</span><span className="mr-2">:</span><span className="font-normal uppercase">{entry.grade || "0"}</span></div>
-            <div className="flex"><span className="w-48">Batcher Name</span><span className="mr-2">:</span><span className="font-normal">Stetter</span></div>
+        {/* Right Column */}
+        <div className="space-y-0.5 mt-0">
+          <div className="flex justify-between w-full pr-12">
+            <span className="font-bold">Plant Serial Number</span>
+            <span>{entry.plantSN || "3851"}</span>
           </div>
-          <div className="space-y-[2px] pr-12">
-            <div className="flex"><span className="w-40">Ordered Quantity</span><span className="mr-2">:</span><span className="font-normal">0.00 M³</span></div>
-            <div className="flex"><span className="w-40">Production Quantity</span><span className="mr-2">:</span><span className="font-normal">{productionQty.toFixed(2)} M³</span></div>
-            <div className="flex"><span className="w-40">Adj/Manual Quantity</span><span className="mr-2">:</span><span className="font-normal">0.00 M³</span></div>
-            <div className="flex"><span className="w-40">With This Load</span><span className="mr-2">:</span><span className="font-normal">{productionQty.toFixed(2)} M³</span></div>
-            <div className="flex"><span className="w-40">Mixer Capacity</span><span className="mr-2">:</span><span className="font-normal">{MIXER_CAPACITY.toFixed(2)} M³</span></div>
-            <div className="flex"><span className="w-40">Batch Size</span><span className="mr-2">:</span><span className="font-normal">{MIXER_CAPACITY.toFixed(2)} M³</span></div>
+          
+          <div className="h-[74px]"></div>
+
+          <div className="flex justify-between w-full pr-12">
+            <span className="font-bold">Ordered Quantity</span>
+            <div className="flex items-center"><span className="w-4">:</span><span className="w-16 text-right">0.00 M³</span></div>
+          </div>
+          <div className="flex justify-between w-full pr-12">
+            <span className="font-bold">Production Quantity</span>
+            <div className="flex items-center"><span className="w-4">:</span><span className="w-16 text-right">{(productionQty || 0).toFixed(2)} M³</span></div>
+          </div>
+          <div className="flex justify-between w-full pr-12">
+            <span className="font-bold">Adj/Manual Quantity</span>
+            <div className="flex items-center"><span className="w-4">:</span><span className="w-16 text-right">0.00 M³</span></div>
+          </div>
+          <div className="flex justify-between w-full pr-12">
+            <span className="font-bold">With This Load</span>
+            <div className="flex items-center"><span className="w-4">:</span><span className="w-16 text-right">{(productionQty || 0).toFixed(2)} M³</span></div>
+          </div>
+          <div className="flex justify-between w-full pr-12">
+            <span className="font-bold">Mixer Capacity</span>
+            <div className="flex items-center"><span className="w-4">:</span><span className="w-16 text-right">{MIXER_CAPACITY.toFixed(2)} M³</span></div>
+          </div>
+          <div className="flex justify-between w-full pr-12">
+            <span className="font-bold">Batch Size</span>
+            <div className="flex items-center"><span className="w-4">:</span><span className="w-16 text-right">{MIXER_CAPACITY.toFixed(2)} M³</span></div>
           </div>
         </div>
+      </div>
 
-        {/* Table representation matching 15-columns */}
-        <table className="w-full text-[11px] border-collapse border-spacing-0">
+
+        {/* Table representation matching photo */}
+        <table className="w-full text-[11px] border-collapse border-spacing-0 mb-4">
           <thead>
             {/* Group headers */}
             <tr>
-              <th className="w-10"></th>
               {groupOrder.map(g => {
                 const len = reportColumns.filter(c => c.group === g).length;
-                return <th key={g} colSpan={len} className="font-bold text-center pl-2">{g}</th>
+                const label = g === "Silica" ? "MS / ICE" : g;
+                return <th key={g} colSpan={len} className="font-bold text-center pb-1 text-[12px]">{label}</th>
               })}
             </tr>
             {/* Column headers */}
-            <tr>
-              <th></th>
-              {reportColumns.map(c => <th key={c.key} className="font-normal text-center whitespace-nowrap">{c.label}</th>)}
+            <tr className="border-b-[1px] border-black">
+              {reportColumns.map((c, i) => <th key={c.key} className={`font-normal text-center pb-2 whitespace-nowrap px-1 ${i===0?'text-left pl-1':''}`}>{c.label}</th>)}
             </tr>
           </thead>
           <tbody>
+            {/* 1. Targets row section */}
             <tr>
-              <td colSpan={reportColumns.length + 1} className="font-normal normal-case pt-2">Targets based on batchsize in</td>
+              <td colSpan={reportColumns.length} className="font-normal pt-2 pl-1 leading-none">Targets based on batchsize in</td>
             </tr>
-            <tr className="border-b border-black">
-              <td className="font-normal text-left pb-1 font-bold">Kgs.</td>
-              {reportColumns.map(col => (
-                <td key={col.key} className="text-center pb-1 font-bold">
-                  {getTargetDisplay(col.key, targets)}
+            <tr className="border-b-[1px] border-black">
+              {reportColumns.map((col, idx) => (
+                <td key={col.key} className={`text-center py-1.5 ${idx===0?'text-left pl-1':''}`}>
+                  {idx === 0 ? <><span className="font-bold pr-1">Kgs.</span>{getTargetDisplay(col.key, targets)}</> : getTargetDisplay(col.key, targets)}
                 </td>
               ))}
             </tr>
             
-            {/* Actuals */}
+            {/* 2. Actuals section */}
             <tr>
-              <td colSpan={reportColumns.length + 1} className="font-normal normal-case pt-1">Actual in Kgs.</td>
+              <td colSpan={reportColumns.length} className="font-normal pt-2 pl-1 leading-none">Actual in Kgs.</td>
             </tr>
             {reportData.rows.map((r, idx) => (
               <tr key={idx}>
-                <td></td>
-                {reportColumns.map(c => (
-                  <td key={c.key} className={`text-center font-normal ${idx === reportData.rows.length - 1 ? "pb-[6px]" : ""}`}>
+                {reportColumns.map((c, i) => (
+                  <td key={c.key} className={`text-center font-normal py-0.5 ${i===0?'text-left pl-1':''}`}>
                     {getActualDisplay(c.key, r[c.key])}
                   </td>
                 ))}
               </tr>
             ))}
-            
-            {/* Total Set Weight */}
-            <tr className="border-t border-black">
-              <td colSpan={reportColumns.length + 1} className="font-normal normal-case pt-1 text-[11px]">Total Set Weight in Kgs.</td>
+
+            {/* 3. Total Set Weight section */}
+            <tr className="border-t-[1px] border-black">
+              <td colSpan={reportColumns.length} className="font-normal pt-2 pl-1 leading-none">Total Set Weight in Kgs.</td>
             </tr>
-            <tr className="font-bold">
-              <td></td>
-              {reportColumns.map(col => {
-                if (col.key === "moi" || col.key === "pm" || col.key === "zero3" || col.key === "zero4") {
-                  return <td key={col.key}></td>;
-                }
-                if (col.key === "zero1" || col.key === "zero2") {
-                  return <td key={col.key} className="text-center">0</td>;
-                }
+            <tr className="font-bold text-center">
+              {reportColumns.map((col, i) => {
+                if (col.key === "moi" || col.key === "pm") return <td key={col.key}></td>;
                 let st = targets[col.key] ? Number(targets[col.key]) : 0;
-                let display = Math.round(st * reportData.totalBatches);
-                if (col.key === "admix1" || col.key === "admix2") {
-                   display = (st * reportData.totalBatches).toFixed(2);
-                   return <td key={col.key} className="text-center">{display === "0.00" || display === 0 ? "0.00" : display}</td>;
-                }
-                return <td key={col.key} className="text-center">{display}</td>;
+                let display = Math.round(st * (reportData.totalBatches || 0));
+                if (col.key === "admix1" || col.key === "admix2") display = (st * (reportData.totalBatches || 0)).toFixed(2);
+                return <td key={col.key} className={`py-1.5 ${i===0?'text-left pl-1':''}`}>{display}</td>;
               })}
             </tr>
 
-            {/* Total Actual */}
-            <tr>
-              <td colSpan={reportColumns.length + 1} className="font-normal normal-case pt-3 pb-1 text-[11px]">Total Actual in Kgs</td>
+            {/* 4. Total Actual section */}
+            <tr className="border-t-[1px] border-black">
+              <td colSpan={reportColumns.length} className="font-normal pt-2 pl-1 leading-none">Total Actual in Kgs.</td>
             </tr>
-            <tr className="border-b border-black font-bold">
-              <td className="pb-1"></td>
-              {reportColumns.map(col => {
-                if (col.key === "moi" || col.key === "pm" || col.key === "zero3") {
-                   return <td key={col.key} className="pb-1"></td>;
-                }
-                if (col.key === "zero1" || col.key === "zero2" || col.key === "zero4") {
-                  return <td key={col.key} className="pb-1 text-center font-bold">0</td>;
-                }
-                const act = col.key.includes("admix") ? reportData.totals[col.key].toFixed(2) : Math.round(reportData.totals[col.key]);
-                return <td key={col.key} className="text-center font-bold pb-1">{act}</td>;
+            <tr className="font-bold border-b-[1px] border-black text-center mb-2">
+              {reportColumns.map((col, i) => {
+                if (col.key === "moi" || col.key === "pm") return <td key={col.key} className="pb-1"></td>;
+                const val = reportData.totals[col.key] || 0;
+                const act = col.key.includes("admix") ? Number(val).toFixed(2) : Math.round(val);
+                return <td key={col.key} className={`pb-2 ${i===0?'text-left pl-1':''}`}>{act}</td>;
               })}
             </tr>
           </tbody>
         </table>
+        
+        <div className="flex justify-between mt-8 px-4 text-[12px] font-bold">
+            <div>Operator Signature</div>
+            <div>Customer Signature</div>
+        </div>
     </div>
   );
 }
@@ -195,7 +204,7 @@ export function AutographicReport({ entry, targets, reportData, onPrint, onSaveT
   const today = new Date().toLocaleDateString("en-GB", { 
     day: "2-digit", 
     month: "short", 
-    year: "2-digit" 
+    year: "numeric" 
   }).replace(/ /g, "-");
 
   return (
@@ -205,7 +214,7 @@ export function AutographicReport({ entry, targets, reportData, onPrint, onSaveT
           <div className="mb-6 flex flex-wrap items-start justify-between gap-6">
             <div>
               <p className="text-xs font-semibold uppercase tracking-widest text-muted">
-                Docket / Batch Report
+                SUPERTECH RMC CHARHOLI
               </p>
               <h2 className="mt-1 text-2xl font-semibold text-brand-1">
                 Autographic Record
@@ -216,12 +225,14 @@ export function AutographicReport({ entry, targets, reportData, onPrint, onSaveT
                 <div className="rounded-2xl border border-border bg-surface px-5 py-2 text-sm hidden sm:block">
                   <p className="text-[10px] uppercase tracking-widest text-muted">Plant S/N</p>
                   {onUpdateField ? (
-                    <input 
-                      type="text"
-                      className="mt-0.5 bg-transparent font-semibold border-none focus:outline-none focus:ring-1 focus:ring-brand-1/20 w-16 text-lg p-0"
-                      value={entry.plantSN || "3851"}
-                      onChange={(e) => onUpdateField("plantSN", e.target.value)}
-                    />
+                    <div className="flex items-center gap-1">
+                      <input 
+                        type="text"
+                        className="bg-transparent font-semibold border-none focus:outline-none focus:ring-1 focus:ring-brand-1/20 w-24 text-lg p-0"
+                        value={entry.plantSN ?? ""}
+                        onChange={(e) => onUpdateField("plantSN", e.target.value)}
+                      />
+                    </div>
                   ) : (
                     <p className="mt-0.5 text-lg font-semibold text-foreground">{entry.plantSN || "3851"}</p>
                   )}
@@ -238,7 +249,7 @@ export function AutographicReport({ entry, targets, reportData, onPrint, onSaveT
             )}
           </div>
 
-          <div className="mb-8 grid gap-6 md:grid-cols-2">
+          <div className="mb-8 grid gap-8 md:grid-cols-2">
             <div className="space-y-2 text-sm text-stone-700">
               {[
                 ["Batch Date", today],
@@ -260,9 +271,9 @@ export function AutographicReport({ entry, targets, reportData, onPrint, onSaveT
             <div className="space-y-2 text-sm text-stone-700">
               {[
                 ["Ordered Quantity", "0.00 m³"],
-                ["Production Quantity", `${productionQty.toFixed(2)} m³`],
+                ["Production Quantity", `${(productionQty || 0).toFixed(2)} m³`],
                 ["Adj/Manual Quantity", "0.00 m³"],
-                ["With This Load", `${productionQty.toFixed(2)} m³`],
+                ["With This Load", `${(productionQty || 0).toFixed(2)} m³`],
                 ["Mixer Capacity", `${MIXER_CAPACITY.toFixed(2)} m³`],
                 ["Batch Size", `${MIXER_CAPACITY.toFixed(2)} m³`],
               ].map(([label, value]) => (
@@ -274,7 +285,7 @@ export function AutographicReport({ entry, targets, reportData, onPrint, onSaveT
             </div>
           </div>
 
-          {/* Records Table */}
+          {/* Records Table Preview */}
           <div className="overflow-x-auto rounded-2xl border border-border">
             <table className="min-w-full border-separate border-spacing-0 text-xs">
               <thead>
@@ -283,7 +294,7 @@ export function AutographicReport({ entry, targets, reportData, onPrint, onSaveT
                   {groupOrder.map((group) => {
                     const span = reportColumns.filter((c) => c.group === group).length;
                     return (
-                      <th key={group} colSpan={span} className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-widest text-center">
+                      <th key={group} colSpan={span} className="px-3 py-2 text-xs font-semibold uppercase tracking-widest text-center border-l border-border first:border-l-0">
                         {group}
                       </th>
                     );
@@ -308,7 +319,7 @@ export function AutographicReport({ entry, targets, reportData, onPrint, onSaveT
                   ))}
                 </tr>
                 {reportData.rows.map((row) => (
-                  <tr key={row.id} className={`text-center ${row.id % 2 === 0 ? "bg-white" : "bg-[#fffdf9]"}`}>
+                  <tr key={row.id} className={`text-center ${row.id % 2 === 0 ? "bg-white" : "bg-stone-50/50"}`}>
                     <td className="border-b border-border px-3 py-2 font-semibold text-brand-1 text-left">{row.id}</td>
                     {reportColumns.map((col) => (
                       <td key={col.key} className="border-b border-border px-3 py-2">
@@ -318,24 +329,26 @@ export function AutographicReport({ entry, targets, reportData, onPrint, onSaveT
                   </tr>
                 ))}
               </tbody>
-              <tfoot className="text-center">
-                <tr className="bg-surface font-semibold text-stone-700">
-                  <td className="px-3 py-2 text-left">Total Set Weight</td>
+              <tfoot className="text-center font-bold">
+                <tr className="bg-surface text-stone-800">
+                  <td className="px-3 py-3 text-left">Total Set Weight</td>
                   {reportColumns.map((col) => {
+                    if (col.key === "moi" || col.key === "pm") return <td key={col.key}></td>;
                     let st = targets[col.key] ? Number(targets[col.key]) : 0;
-                    if (col.key === "moi" || col.key === "pm" || col.key === "zero1" || col.key === "zero2" || col.key === "zero3" || col.key === "zero4") st = 0;
-                    let display = Math.round(st * reportData.totalBatches);
-                    if (col.key === "admix1" || col.key === "admix2") display = (st * reportData.totalBatches).toFixed(2);
-                    return <td key={col.key} className="px-3 py-2">{display === 0 ? "0" : display}</td>;
+                    let display = Math.round(st * (reportData.totalBatches || 0));
+                    if (col.key === "admix1" || col.key === "admix2") display = (st * (reportData.totalBatches || 0)).toFixed(2);
+                    return <td key={col.key} className="px-3 py-3">{display === 0 ? "0" : display}</td>;
                   })}
                 </tr>
-                <tr className="bg-brand-2/20 font-semibold text-stone-700">
-                  <td className="px-3 py-2 text-left border-b border-border">Total Actual</td>
+                <tr className="bg-white text-brand-1">
+                  <td className="px-3 py-3 text-left border-t border-border">Total Actual</td>
                   {reportColumns.map((col) => {
-                    if (col.key === "moi" || col.key === "pm" || col.key === "zero1" || col.key === "zero2" || col.key === "zero3" || col.key === "zero4") return <td key={col.key} className="px-3 py-2">0</td>;
+                    if (col.key === "moi" || col.key === "pm") return <td key={col.key} className="px-3 py-3 border-t border-border"></td>;
+                    const val = reportData.totals[col.key] || 0;
+                    const act = col.key.includes("admix1") || col.key.includes("admix2") ? Number(val).toFixed(2) : Math.round(val);
                     return (
-                      <td key={col.key} className="px-3 py-2">
-                        {col.key.includes("admix") ? reportData.totals[col.key].toFixed(2) : Math.round(reportData.totals[col.key])}
+                      <td key={col.key} className="px-3 py-3 border-t border-border">
+                        {act}
                       </td>
                     );
                   })}

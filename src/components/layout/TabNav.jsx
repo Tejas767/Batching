@@ -8,7 +8,14 @@
 
 import { motion } from "framer-motion";
 
-const TABS = ["ENTRY", "EDIT", "REPORT", "HISTORY"];
+const TABS = [
+  { id: "ENTRY", label: "ENTRY" },
+  { id: "CUSTOMERS", label: "ADD CUSTOMER" },
+  { id: "VEHICLE", label: "VEHICLE" },
+  { id: "EDIT", label: "MIX DESIGN" },
+  { id: "REPORT", label: "REPORT" },
+  { id: "HISTORY", label: "HISTORY" },
+];
 
 export function TabNav({ activeTab, onTabChange }) {
   return (
@@ -19,11 +26,11 @@ export function TabNav({ activeTab, onTabChange }) {
       {/* Scrollable strip on mobile, flex row on desktop */}
       <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1 md:flex-wrap md:overflow-visible">
         {TABS.map((tab) => {
-          const isActive = activeTab === tab;
+          const isActive = activeTab === tab.id;
           return (
             <motion.button
-              key={tab}
-              onClick={() => onTabChange(tab)}
+              key={tab.id}
+              onClick={() => onTabChange(tab.id)}
               whileHover={{ scale: 1.04 }}
               whileTap={{ scale: 0.96 }}
               transition={{ type: "spring", stiffness: 400, damping: 20 }}
@@ -36,7 +43,7 @@ export function TabNav({ activeTab, onTabChange }) {
                   : "border-border bg-white text-stone-600 hover:border-brand-1 hover:text-brand-1",
               ].join(" ")}
             >
-              {tab}
+              {tab.label}
               {isActive && (
                 <motion.span
                   layoutId="tab-indicator"

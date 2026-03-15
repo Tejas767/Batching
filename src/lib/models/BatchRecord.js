@@ -45,6 +45,10 @@ const BatchRecordSchema = new Schema(
 
 // ── Indexes for fast queries ───────────────────────
 BatchRecordSchema.index({ userId: 1, createdAt: -1 });
+BatchRecordSchema.index({ docketNo: 1 });
+BatchRecordSchema.index({ customerName: 1 });
+BatchRecordSchema.index({ site: 1 });
+BatchRecordSchema.index({ truckNumber: 1 });
 BatchRecordSchema.index({ createdAt: -1 });
 
 export default models.BatchRecord || model("BatchRecord", BatchRecordSchema);

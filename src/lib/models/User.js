@@ -59,6 +59,12 @@ const UserSchema = new Schema(
       default: null, // null = no expiry (admins)
     },
 
+    // ── Plant Settings ──────────────────────────
+    plantSN: {
+      type: String,
+      default: "", // Empty means use system default
+    },
+
     // ── Audit ────────────────────────────────────
     createdBy: {
       type: Schema.Types.ObjectId,
