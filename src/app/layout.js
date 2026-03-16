@@ -21,7 +21,7 @@ const splineMono = Spline_Sans_Mono({
 ──────────────────────────────────────────────── */
 export const metadata = {
   title: {
-    default: "ShreeHari | Concrete Batching System",
+    default: "Concrete Batching System",
     template: "%s | ShreeHari CBS",
   },
   description:
@@ -40,7 +40,7 @@ export const metadata = {
     follow: true,
   },
   openGraph: {
-    title: "ShreeHari | Concrete Batching System",
+    title: "Concrete Batching System",
     description: "Professional concrete batching management — entry, mix design, report.",
     type: "website",
     locale: "en_IN",
