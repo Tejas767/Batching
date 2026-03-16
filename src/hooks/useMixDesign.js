@@ -1,16 +1,10 @@
-"use client";
-
 import { useState, useCallback, useEffect } from "react";
-import { initialMixDesign, initialDifferences, DEFAULT_BATCH_SIZE } from "@/constants/mixConfig";
-
-const initialState = {
-  grades: initialMixDesign,
-  batchSize: DEFAULT_BATCH_SIZE,
-  differences: initialDifferences
-};
+import { initialMixDesign, MIXER_CAPACITY, defaultDifferences } from "@/constants/mixConfig";
 
 export function useMixDesign() {
-  const [data, setData] = useState(initialState);
+  const [mixDesign, setMixDesign] = useState(initialMixDesign);
+  const [batchSize, setBatchSize] = useState(MIXER_CAPACITY);
+  const [differences, setDifferences] = useState(defaultDifferences);
   const [syncMessage, setSyncMessage] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -19,13 +13,16 @@ export function useMixDesign() {
     setLoading(true);
     try {
       const res = await fetch("/api/mix-design");
-      const json = await res.json();
-      if (json.data) {
-        // Migration: If data.data is the old grades-only format, wrap it
-        if (!json.data.grades && !json.data.differences) {
-          setData(prev => ({ ...prev, grades: json.data }));
+      const data = await res.json();
+      if (data.data) {
+        if (data.data.grades) {
+          setMixDesign(data.data.grades);
+          setBatchSize(data.data.batchSize ?? MIXER_CAPACITY);
+          setDifferences(data.data.differences ?? defaultDifferences);
         } else {
-          setData(json.data);
+          setMixDesign(data.data);
+          setBatchSize(MIXER_CAPACITY);
+          setDifferences(defaultDifferences);
         }
       }
     } catch (err) {
@@ -40,13 +37,13 @@ export function useMixDesign() {
   }, [loadMixDesign]);
 
   // Save to MongoDB
-  const saveMixDesign = useCallback(async (payload) => {
+  const saveMixDesign = useCallback(async (grades, size, diffs) => {
     setSyncMessage("Saving...");
     try {
       const res = await fetch("/api/mix-design", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ design: payload }),
+        body: JSON.stringify({ design: { grades, batchSize: size, differences: diffs } }),
       });
       if (res.ok) {
         setSyncMessage("Saved to Cloud ✅");
@@ -61,66 +58,52 @@ export function useMixDesign() {
     }
   }, []);
 
-  // Auto-save logic (Debounced)
+  // Auto-save logic (Debounced) — triggers on any of the three states
   useEffect(() => {
-    if (loading) return; 
-    
+    if (loading) return;
     const timer = setTimeout(() => {
-      saveMixDesign(data);
+      saveMixDesign(mixDesign, batchSize, differences);
     }, 1000);
-
     return () => clearTimeout(timer);
-  }, [data, loading, saveMixDesign]);
+  }, [mixDesign, batchSize, differences, loading, saveMixDesign]);
 
   // Update a single cell in the mix design grid
   const updateCell = useCallback((grade, key, value) => {
-    setData((prev) => ({
+    setMixDesign((prev) => ({
       ...prev,
-      grades: {
-        ...prev.grades,
-        [grade]: { ...prev.grades[grade], [key]: value === "" ? "" : Number(value) }
-      }
+      [grade]: { ...prev[grade], [key]: value === "" ? "" : Number(value) },
     }));
   }, []);
 
+  // Update a single difference value
   const updateDifference = useCallback((key, value) => {
-    setData((prev) => ({
+    setDifferences((prev) => ({
       ...prev,
-      differences: { 
-        ...prev.differences, 
-        [key]: value === "" ? "" : Number(value) 
-      }
-    }));
-  }, []);
-
-  const updateBatchSize = useCallback((value) => {
-    setData((prev) => ({
-      ...prev,
-      batchSize: value === "" ? "" : Number(value)
+      [key]: value === "" ? 0 : Number(value),
     }));
   }, []);
 
   const resetMixDesign = useCallback(() => {
-    if (confirm("Reset ALL mix designs to factory defaults?")) {
-      setData(initialState);
-      saveMixDesign(initialState);
+    if (confirm("Reset ALL mix designs, batch size, and differences to factory defaults?")) {
+      setMixDesign(initialMixDesign);
+      setBatchSize(MIXER_CAPACITY);
+      setDifferences(defaultDifferences);
+      saveMixDesign(initialMixDesign, MIXER_CAPACITY, defaultDifferences);
       setSyncMessage("Reset to defaults");
       setTimeout(() => setSyncMessage(""), 2000);
     }
   }, [saveMixDesign]);
 
-  return { 
-    mixDesign: data.grades, // Keep alias for backward compatibility in Home
-    batchSize: data.batchSize,
-    differences: data.differences,
-    syncMessage, 
+  return {
+    mixDesign,
+    batchSize, setBatchSize,
+    differences, updateDifference,
+    syncMessage,
     loading,
-    loadMixDesign, 
-    saveMixDesign, 
-    updateCell, 
-    updateDifference,
-    updateBatchSize,
-    resetMixDesign 
+    loadMixDesign,
+    saveMixDesign,
+    updateCell,
+    resetMixDesign,
   };
 }
 

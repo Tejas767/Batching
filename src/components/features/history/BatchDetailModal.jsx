@@ -36,6 +36,7 @@ export function BatchDetailModal({ record, onClose }) {
             entry={entry}
             targets={targets}
             reportData={reportData}
+            batchSize={record.batchSize}
             hideActions={true}
           />
         </div>

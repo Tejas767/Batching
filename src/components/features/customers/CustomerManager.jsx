@@ -36,9 +36,6 @@ export function CustomerManager({
               Customer Management
             </p>
             <h2 className="text-2xl font-semibold text-brand-1">Add Customer</h2>
-            <p className="mt-1 text-sm text-stone-500">
-              Manage your list of customers and their default sites.
-            </p>
           </div>
           <button
             onClick={() => {
@@ -56,7 +53,6 @@ export function CustomerManager({
           <div className="flex-1 w-full">
             <Input
               label="Customer Name"
-              placeholder="e.g. Reliance Infra"
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
@@ -64,7 +60,6 @@ export function CustomerManager({
           <div className="flex-1 w-full">
             <Input
               label="Default Site"
-              placeholder="e.g. Mumbai Project"
               value={site}
               onChange={(e) => setSite(e.target.value)}
             />

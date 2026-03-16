@@ -5,7 +5,7 @@
  */
 "use client";
 
-import { CheckCircle, ChevronDown } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 
 export function Input({ label, valid = null, className = "", ...inputProps }) {
   return (
@@ -28,9 +28,6 @@ export function Input({ label, valid = null, className = "", ...inputProps }) {
           className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-foreground outline-none placeholder:text-stone-400"
           {...inputProps}
         />
-        {valid === true && (
-          <CheckCircle size={16} className="shrink-0 text-green-500" />
-        )}
       </div>
     </label>
   );
@@ -85,9 +82,6 @@ export function Select({ label, options, valid = null, className = "", ...select
         </select>
         <div className="pointer-events-none absolute right-4 flex items-center gap-2">
           <ChevronDown size={14} className="text-muted" />
-          {valid === true && (
-            <CheckCircle size={16} className="text-green-500" />
-          )}
         </div>
       </div>
     </label>

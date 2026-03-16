@@ -64,8 +64,8 @@ export default function Home() {
 
   // ── Data / Logic hooks ──────────────────────
   const {
-    mixDesign, batchSize, differences, syncMessage,
-    loadMixDesign, saveMixDesign, updateCell, updateBatchSize, updateDifference, resetMixDesign,
+    mixDesign, batchSize, setBatchSize, differences, updateDifference, syncMessage,
+    loadMixDesign, saveMixDesign, updateCell, resetMixDesign,
   } = useMixDesign();
 
   const { entry, updateField, handleStart, handleStop, incrementDocketNo, resetForm } = useBatchEntry(user);
@@ -102,8 +102,10 @@ export default function Home() {
     const dataToPrint = lastBatch || {
       ...entry,
       mixDesign: targets,
-      reportRows: reportData.rows,
+      batchSize,
+      rows: reportData.rows,
       totals: reportData.totals,
+      setWeights: reportData.setWeights,
     };
 
     saveToHistory(dataToPrint).then(loadHistory);
@@ -128,8 +130,10 @@ export default function Home() {
     const batchData = {
       ...finalEntry,
       mixDesign: finalTargets,
+      batchSize,
       rows: reportData.rows,
       totals: reportData.totals,
+      setWeights: reportData.setWeights,
       totalBatches: reportData.totalBatches
     };
 
@@ -150,8 +154,10 @@ export default function Home() {
     const dataToSave = lastBatch ? lastBatch : {
       ...entry,
       mixDesign: targets,
+      batchSize,
       rows: reportData.rows,
       totals: reportData.totals,
+      setWeights: reportData.setWeights,
       totalBatches: reportData.totalBatches
     };
 
@@ -246,12 +252,12 @@ export default function Home() {
             <MixDesignEditor
               mixDesign={mixDesign}
               batchSize={batchSize}
+              setBatchSize={setBatchSize}
               differences={differences}
+              onUpdateDifference={updateDifference}
               syncMessage={syncMessage}
               onUpdateCell={updateCell}
-              onUpdateBatchSize={updateBatchSize}
-              onUpdateDifference={updateDifference}
-              onSave={() => saveMixDesign({ grades: mixDesign, batchSize, differences })}
+              onSave={() => saveMixDesign(mixDesign, batchSize, differences)}
               onReset={resetMixDesign}
             />
           )}
@@ -262,6 +268,7 @@ export default function Home() {
               entry={lastBatch || entry}
               targets={lastBatch?.mixDesign || targets}
               reportData={lastBatch || reportData}
+              batchSize={lastBatch?.batchSize || batchSize}
               onPrint={handlePrint}
               onSaveToHistory={handleSaveToHistory}
               onUpdateField={updateField}
@@ -342,6 +349,7 @@ export default function Home() {
         entry={lastBatch || entry}
         targets={lastBatch?.mixDesign || targets}
         reportData={lastBatch || reportData}
+        batchSize={lastBatch?.batchSize || batchSize}
       />
     </PageShell>
   );

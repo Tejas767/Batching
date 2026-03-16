@@ -15,8 +15,8 @@ export function AppHeader() {
   const { user, signOut } = useSession();
 
   const daysRemaining = user?.daysRemaining ?? null;
-  const showWarning   = daysRemaining !== null && daysRemaining <= 7;
-  const isAdmin       = user?.role === "admin";
+  const showWarning = daysRemaining !== null && daysRemaining <= 7;
+  const isAdmin = user?.role === "admin";
 
   return (
     <motion.header
@@ -29,15 +29,6 @@ export function AppHeader() {
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         {/* Brand */}
         <div>
-          <p className="text-[10px] md:text-xs font-semibold uppercase tracking-[0.3em] md:tracking-[0.4em] text-muted">
-            Concrete Batching System
-          </p>
-          <h1 className="mt-1 text-2xl font-semibold text-brand-1 md:text-4xl">
-            Production Console
-          </h1>
-          <p className="mt-1 text-xs text-stone-500 md:text-sm md:max-w-xl hidden sm:block">
-            Entry, mix design, and autographic report with live batch generation.
-          </p>
         </div>
 
         {/* Right side: User Identity & Actions */}
@@ -76,16 +67,14 @@ export function AppHeader() {
 
             {/* Subscription Days (Always visible) */}
             {daysRemaining !== null && (
-              <div className={`hidden sm:flex items-center gap-1.5 rounded-full border px-3 py-2 text-xs font-bold shadow-sm ${
-                daysRemaining <= 5 ? "bg-red-50 border-red-200 text-red-700" :
-                daysRemaining <= 15 ? "bg-amber-50 border-amber-200 text-amber-700" :
-                "bg-emerald-50 border-emerald-200 text-emerald-700"
-              }`}>
-                <div className={`h-1.5 w-1.5 rounded-full animate-pulse ${
-                  daysRemaining <= 5 ? "bg-red-500" :
-                  daysRemaining <= 15 ? "bg-amber-500" :
-                  "bg-emerald-500"
-                }`} />
+              <div className={`hidden sm:flex items-center gap-1.5 rounded-full border px-3 py-2 text-xs font-bold shadow-sm ${daysRemaining <= 5 ? "bg-red-50 border-red-200 text-red-700" :
+                  daysRemaining <= 15 ? "bg-amber-50 border-amber-200 text-amber-700" :
+                    "bg-emerald-50 border-emerald-200 text-emerald-700"
+                }`}>
+                <div className={`h-1.5 w-1.5 rounded-full animate-pulse ${daysRemaining <= 5 ? "bg-red-500" :
+                    daysRemaining <= 15 ? "bg-amber-500" :
+                      "bg-emerald-500"
+                  }`} />
                 {daysRemaining === 0 ? "Expired" : `${daysRemaining} Days Left`}
               </div>
             )}
@@ -105,11 +94,10 @@ export function AppHeader() {
         <motion.div
           initial={{ opacity: 0, y: -4 }}
           animate={{ opacity: 1, y: 0 }}
-          className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium border ${
-            daysRemaining === 0
+          className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium border ${daysRemaining === 0
               ? "bg-red-50 border-red-200 text-red-700"
               : "bg-amber-50 border-amber-200 text-amber-800"
-          }`}
+            }`}
         >
           <AlertTriangle size={15} className="shrink-0" />
           {daysRemaining === 0

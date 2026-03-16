@@ -36,9 +36,6 @@ export function VehicleManager({
               Vehicle Management
             </p>
             <h2 className="text-2xl font-semibold text-brand-1">Add Vehicle</h2>
-            <p className="mt-1 text-sm text-stone-500">
-              Manage your list of trucks and their default drivers.
-            </p>
           </div>
           <button
             onClick={() => {
@@ -56,7 +53,6 @@ export function VehicleManager({
           <div className="flex-1 w-full">
             <Input
               label="Truck Number"
-              placeholder="e.g. MH-12-AB-1234"
               value={truckNumber}
               onChange={(e) => setTruckNumber(e.target.value)}
             />
@@ -64,7 +60,6 @@ export function VehicleManager({
           <div className="flex-1 w-full">
             <Input
               label="Driver Name"
-              placeholder="e.g. Rahul Patil"
               value={driverName}
               onChange={(e) => setDriverName(e.target.value)}
             />

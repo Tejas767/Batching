@@ -19,26 +19,20 @@ export const initialMixDesign = grades.reduce((acc, grade) => {
   return acc;
 }, {});
 
-// Default tolerances / differences (±)
-export const initialDifferences = {
-  mm10: 5, cSan: 5, cSand: 5, mm20: 5, cem1: 5, ggbs: 5, 
-  flyAsh: 5, watIce: 5, water: 5, silica: 5, admix1: 0.1, admix2: 0.1
-};
-
-export const DEFAULT_BATCH_SIZE = 0.5;
-
 // Columns shown in the editable MIX DESIGN tab
 export const mixColumns = [
-  { key: "mm10",   label: "10MM" },
-  { key: "cSan",   label: "R SAN" },
-  { key: "cSand",  label: "C SAN" },
-  { key: "mm20",   label: "20MM" },
+  { key: "mm10",   label: "10 M" },
+  { key: "cSan",   label: "C SAN" },
+  { key: "cSand",  label: "C SAND" },
+  { key: "mm20",   label: "20 MM" },
   { key: "cem1",   label: "CEM1" },
   { key: "ggbs",   label: "GGBS" },
   { key: "flyAsh", label: "FLY ASH" },
+  { key: "watIce", label: "WAT/ICE" },
   { key: "water",  label: "WATER" },
-  { key: "admix1", label: "ADMIX1" },
-  { key: "admix2", label: "ADMIX2" },
+  { key: "silica", label: "Silica" },
+  { key: "admix1", label: "ADM1" },
+  { key: "admix2", label: "ADM2" },
 ];
 
 // Columns for the autographic REPORT tab (includes zero/placeholder columns)
@@ -69,3 +63,20 @@ export const groupOrder = ["Aggregate", "Cement", "Water / Ice", "Silica", "Admi
 
 // Mixer capacity in m³ per batch
 export const MIXER_CAPACITY = 0.50;
+
+// Default variance (allowed difference ±) per material column
+// Operator can edit these in the Mix Design DIFFERENCE row
+export const defaultDifferences = {
+  mm10:   3,
+  cSan:   3,
+  cSand:  3,
+  mm20:   3,
+  cem1:   2,
+  ggbs:   2,
+  flyAsh: 2,
+  watIce: 1,
+  water:  4,
+  silica: 1,
+  admix1: 0.07,
+  admix2: 0.07,
+};

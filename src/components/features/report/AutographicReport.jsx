@@ -1,16 +1,8 @@
-/**
- * AutographicReport.jsx — Feature component.
- *
- * CDD Layer 3: Modern screen UI + Accurate Classic Print Layout.
- * Updated to match SUPERTECH RMC CHARHOLI layout.
- */
-"use client";
-
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Printer, Save } from "lucide-react";
-import { reportColumns, groupOrder, MIXER_CAPACITY } from "@/constants/mixConfig";
+import { reportColumns, groupOrder } from "@/constants/mixConfig";
 
 const LOGO_SRC = "/schwing_stetter_logo_clean_1773223963556.png"; 
 
@@ -32,11 +24,13 @@ const getActualDisplay = (colKey, val) => {
 
 // ── CLASSIC LAYOUT (Used for Printing) ──────────────────────────────────────
 
-function ClassicReportLayout({ entry, targets, reportData }) {
+function ClassicReportLayout({ entry, targets, reportData, batchSize = 0.5 }) {
   const productionQty = Number(entry.qty || 0);
   const today = new Date().toLocaleDateString("en-GB", {
     day: "2-digit", month: "short", year: "numeric"
   }).replace(/ /g, "-");
+
+  const bSize = Number(batchSize || 0.5).toFixed(2);
 
   return (
     <div className="font-sans text-black tracking-tight text-[11.5px] bg-white print:block print:w-full print:max-w-none print:m-0 print:p-0 max-w-[850px] mx-auto p-4">
@@ -107,11 +101,11 @@ function ClassicReportLayout({ entry, targets, reportData }) {
           </div>
           <div className="flex justify-between w-full pr-12">
             <span className="font-bold">Mixer Capacity</span>
-            <div className="flex items-center"><span className="w-4">:</span><span className="w-16 text-right">{MIXER_CAPACITY.toFixed(2)} M³</span></div>
+            <div className="flex items-center"><span className="w-4">:</span><span className="w-16 text-right">{bSize} M³</span></div>
           </div>
           <div className="flex justify-between w-full pr-12">
             <span className="font-bold">Batch Size</span>
-            <div className="flex items-center"><span className="w-4">:</span><span className="w-16 text-right">{MIXER_CAPACITY.toFixed(2)} M³</span></div>
+            <div className="flex items-center"><span className="w-4">:</span><span className="w-16 text-right">{bSize} M³</span></div>
           </div>
         </div>
       </div>
@@ -167,9 +161,12 @@ function ClassicReportLayout({ entry, targets, reportData }) {
             <tr className="font-bold text-center">
               {reportColumns.map((col, i) => {
                 if (col.key === "moi" || col.key === "pm") return <td key={col.key}></td>;
-                let st = targets[col.key] ? Number(targets[col.key]) : 0;
-                let display = Math.round(st * (reportData.totalBatches || 0));
-                if (col.key === "admix1" || col.key === "admix2") display = (st * (reportData.totalBatches || 0)).toFixed(2);
+                // Use stored setWeights if available, otherwise fall back to target × batches
+                const sw = reportData.setWeights?.[col.key]
+                  ?? ((Number(targets[col.key]) || 0) * (reportData.totalBatches || 0));
+                const display = (col.key === "admix1" || col.key === "admix2")
+                  ? Number(sw).toFixed(2)
+                  : Math.round(sw);
                 return <td key={col.key} className={`py-1.5 ${i===0?'text-left pl-1':''}`}>{display}</td>;
               })}
             </tr>
@@ -199,13 +196,24 @@ function ClassicReportLayout({ entry, targets, reportData }) {
 
 // ── MODERN SCREEN UI (REPORT TAB) ───────────────────────────────────────────
 
-export function AutographicReport({ entry, targets, reportData, onPrint, onSaveToHistory, hideActions = false, onUpdateField }) {
+export function AutographicReport({ 
+  entry, 
+  targets, 
+  reportData, 
+  batchSize = 0.5,
+  onPrint, 
+  onSaveToHistory, 
+  hideActions = false, 
+  onUpdateField 
+}) {
   const productionQty = Number(entry.qty || 0);
   const today = new Date().toLocaleDateString("en-GB", { 
     day: "2-digit", 
     month: "short", 
     year: "numeric" 
   }).replace(/ /g, "-");
+
+  const bSize = Number(batchSize || 0.5).toFixed(2);
 
   return (
     <>
@@ -274,8 +282,8 @@ export function AutographicReport({ entry, targets, reportData, onPrint, onSaveT
                 ["Production Quantity", `${(productionQty || 0).toFixed(2)} m³`],
                 ["Adj/Manual Quantity", "0.00 m³"],
                 ["With This Load", `${(productionQty || 0).toFixed(2)} m³`],
-                ["Mixer Capacity", `${MIXER_CAPACITY.toFixed(2)} m³`],
-                ["Batch Size", `${MIXER_CAPACITY.toFixed(2)} m³`],
+                ["Mixer Capacity", `${bSize} m³`],
+                ["Batch Size", `${bSize} m³`],
               ].map(([label, value]) => (
                 <div key={label} className="flex justify-between border-b border-border/50 pb-1 last:border-0">
                   <span className="text-muted">{label}</span>
@@ -334,9 +342,12 @@ export function AutographicReport({ entry, targets, reportData, onPrint, onSaveT
                   <td className="px-3 py-3 text-left">Total Set Weight</td>
                   {reportColumns.map((col) => {
                     if (col.key === "moi" || col.key === "pm") return <td key={col.key}></td>;
-                    let st = targets[col.key] ? Number(targets[col.key]) : 0;
-                    let display = Math.round(st * (reportData.totalBatches || 0));
-                    if (col.key === "admix1" || col.key === "admix2") display = (st * (reportData.totalBatches || 0)).toFixed(2);
+                    // Use stored setWeights if available, otherwise fall back to target × batches
+                    const sw = reportData.setWeights?.[col.key]
+                      ?? ((Number(targets[col.key]) || 0) * (reportData.totalBatches || 0));
+                    const display = (col.key === "admix1" || col.key === "admix2")
+                      ? Number(sw).toFixed(2)
+                      : Math.round(sw);
                     return <td key={col.key} className="px-3 py-3">{display === 0 ? "0" : display}</td>;
                   })}
                 </tr>
@@ -363,10 +374,11 @@ export function AutographicReport({ entry, targets, reportData, onPrint, onSaveT
 }
 
 // ── HIDDEN PRINT UI ── //
-export function HiddenPrintReport({ entry, targets, reportData }) {
+export function HiddenPrintReport({ entry, targets, reportData, batchSize }) {
   return (
     <div className="hidden print:block">
-      <ClassicReportLayout entry={entry} targets={targets} reportData={reportData} />
+      <ClassicReportLayout entry={entry} targets={targets} reportData={reportData} batchSize={batchSize} />
     </div>
   );
 }
+
