@@ -11,7 +11,7 @@ import { getSession } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
-// ── GET: fetch history ────────────────────────────────────────
+// ── GET: fetch history (paginated) ─────────────────────────────
 export async function GET(request) {
   const session = await getSession();
   if (!session) {
@@ -25,6 +25,11 @@ export async function GET(request) {
     const from   = searchParams.get("from");
     const to     = searchParams.get("to");
     const search = searchParams.get("search");
+
+    // ── Pagination params ──────────────────────────
+    const page  = Math.max(1, parseInt(searchParams.get("page")  || "1",  10));
+    const limit = Math.min(200, Math.max(1, parseInt(searchParams.get("limit") || "50", 10)));
+    const skip  = (page - 1) * limit;
 
     const query = { userId: session.id };
 
@@ -45,10 +50,14 @@ export async function GET(request) {
       ];
     }
 
+    // Count total matching records (for pagination UI)
+    const total = await BatchRecord.countDocuments(query);
+
     const records = await BatchRecord
       .find(query)
       .sort({ createdAt: -1 })
-      .limit(100)
+      .skip(skip)
+      .limit(limit)
       .lean();
 
     // Normalize to match existing frontend shape
@@ -66,10 +75,21 @@ export async function GET(request) {
       batchStop:    r.batchStop,
       mixDesign:    r.mixDesign,
       reportRows:   r.reportRows,
+      rows:         r.reportRows,
       totals:       r.totals,
+      setWeights:   r.setWeights,
+      totalBatches: r.totalBatches,
     }));
 
-    return Response.json({ data });
+    return Response.json({
+      data,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
   } catch (error) {
     console.error("GET /api/history error:", error.message);
     return Response.json({ error: error.message }, { status: 500 });
@@ -104,6 +124,8 @@ export async function POST(request) {
       mixDesign:    item.mixDesign    ?? {},
       reportRows:   item.reportRows   ?? item.rows ?? [],
       totals:       item.totals       ?? {},
+      setWeights:   item.setWeights   ?? {},
+      totalBatches: item.totalBatches ?? 0,
     });
 
     return Response.json({
@@ -119,7 +141,7 @@ export async function POST(request) {
   }
 }
 
-// ── DELETE: remove a specific record ─────────────────────────
+// ── DELETE: remove one record OR all records ──────────────────
 export async function DELETE(request) {
   const session = await getSession();
   if (!session) {
@@ -130,13 +152,22 @@ export async function DELETE(request) {
     await connectDB();
 
     const { searchParams } = new URL(request.url);
-    const id = searchParams.get("id");
+    const id      = searchParams.get("id");
+    const all     = searchParams.get("all") === "true";
 
-    if (!id) {
-      return Response.json({ error: "id is required" }, { status: 400 });
+    // ── Bulk delete all (single DB call, instant) ──────────────
+    if (all) {
+      // Operators can only delete their own; admins can delete anyone's
+      const filter = session.role === "admin" ? {} : { userId: session.id };
+      const result = await BatchRecord.deleteMany(filter);
+      return Response.json({ data: { deleted: result.deletedCount } });
     }
 
-    // Only allow deleting own records (unless admin)
+    // ── Single record delete ───────────────────────────────────
+    if (!id) {
+      return Response.json({ error: "id or all=true is required" }, { status: 400 });
+    }
+
     const filter = { _id: id };
     if (session.role !== "admin") filter.userId = session.id;
 

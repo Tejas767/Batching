@@ -84,6 +84,7 @@ export default function Home() {
     historyDetails, setHistoryDetails,
     loadHistory, saveToHistory, clearAllHistory, deleteFromHistory,
     setToday, setLast7Days, setThisMonth, clearFilters,
+    currentPage, totalPages, totalCount, nextPage, prevPage, goToPage,
   } = useBatchHistory();
 
   // Targets = mix design row for the currently selected grade
@@ -300,7 +301,7 @@ export default function Home() {
                 onThisMonth={setThisMonth}
                 onClear={clearFilters}
                 onClearAll={() => setShowClearAll(true)}
-                resultCount={filteredHistory.length}
+                resultCount={totalCount}
               />
 
               <BatchHistoryTable
@@ -308,6 +309,35 @@ export default function Home() {
                 onViewDetails={setHistoryDetails}
                 onDeleteDetails={setDeleteId}
               />
+
+              {/* ── Pagination Controls ── */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between pt-4 border-t border-border">
+                  <p className="text-xs text-muted">
+                    Showing <span className="font-semibold text-foreground">{filteredHistory.length}</span> of{" "}
+                    <span className="font-semibold text-foreground">{totalCount.toLocaleString()}</span> records
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={prevPage}
+                      disabled={currentPage <= 1}
+                      className="rounded-full border border-border bg-white px-3 py-1.5 text-xs font-semibold text-stone-600 hover:border-brand-1 hover:text-brand-1 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    >
+                      ← Prev
+                    </button>
+                    <span className="text-xs font-semibold text-stone-700">
+                      Page {currentPage} / {totalPages}
+                    </span>
+                    <button
+                      onClick={nextPage}
+                      disabled={currentPage >= totalPages}
+                      className="rounded-full border border-border bg-white px-3 py-1.5 text-xs font-semibold text-stone-600 hover:border-brand-1 hover:text-brand-1 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    >
+                      Next →
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </motion.section>

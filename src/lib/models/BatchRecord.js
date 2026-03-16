@@ -34,9 +34,11 @@ const BatchRecordSchema = new Schema(
     batchStop:    { type: String, default: "" },
 
     // ── Report Snapshot (saved at print time) ─────
-    mixDesign:  { type: Schema.Types.Mixed, default: {} },
-    reportRows: { type: [Schema.Types.Mixed], default: [] },
-    totals:     { type: Schema.Types.Mixed, default: {} },
+    mixDesign:    { type: Schema.Types.Mixed, default: {} },
+    reportRows:   { type: [Schema.Types.Mixed], default: [] },
+    totals:       { type: Schema.Types.Mixed, default: {} },
+    setWeights:   { type: Schema.Types.Mixed, default: {} },
+    totalBatches: { type: Number, default: 0 },
   },
   {
     timestamps: true, // createdAt, updatedAt

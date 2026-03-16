@@ -1,12 +1,14 @@
 /**
  * useBatchHistory.js — Connected to MongoDB via /api/history.
  *
- * Replaces localStorage with real database calls.
- * History persists across devices and sessions.
+ * Server-side pagination: loads 50 records per page.
+ * Scales to 70,000+ records without performance issues.
  */
 "use client";
 
-import { useState, useCallback, useMemo, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
+
+const PAGE_SIZE = 50;
 
 export function useBatchHistory() {
   const [history, setHistory]           = useState([]);
@@ -16,18 +18,33 @@ export function useBatchHistory() {
   const [historyTo, setHistoryTo]       = useState("");
   const [historyDetails, setHistoryDetails] = useState(null);
 
-  // ── Load from MongoDB ────────────────────────────────────────
-  const loadHistory = useCallback(async () => {
+  // ── Pagination state ────────────────────────────────────────
+  const [currentPage, setCurrentPage]   = useState(1);
+  const [totalPages, setTotalPages]     = useState(1);
+  const [totalCount, setTotalCount]     = useState(0);
+
+  // ── Load from MongoDB (paginated) ───────────────────────────
+  const loadHistory = useCallback(async (page = 1) => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
-      if (historyFrom)      params.set("from",   historyFrom);
-      if (historyTo)        params.set("to",     historyTo);
+      if (historyFrom)         params.set("from",   historyFrom);
+      if (historyTo)           params.set("to",     historyTo);
       if (historyQuery.trim()) params.set("search", historyQuery);
+      params.set("page",  String(page));
+      params.set("limit", String(PAGE_SIZE));
 
       const res  = await fetch(`/api/history?${params.toString()}`);
-      const data = await res.json();
-      setHistory(data.data || []);
+      const json = await res.json();
+
+      setHistory(json.data || []);
+
+      // Update pagination meta
+      if (json.pagination) {
+        setCurrentPage(json.pagination.page);
+        setTotalPages(json.pagination.totalPages);
+        setTotalCount(json.pagination.total);
+      }
     } catch (err) {
       console.error("loadHistory error:", err);
     } finally {
@@ -35,14 +52,30 @@ export function useBatchHistory() {
     }
   }, [historyFrom, historyTo, historyQuery]);
 
-  // Debounced Effect: Only load history after the user stops typing for 500ms
+  // Auto-reload when filters change — reset to page 1
+  const debounceTimer = useRef(null);
   useEffect(() => {
-    const handler = setTimeout(() => {
-      loadHistory();
+    clearTimeout(debounceTimer.current);
+    debounceTimer.current = setTimeout(() => {
+      setCurrentPage(1);
+      loadHistory(1);
     }, 500);
-
-    return () => clearTimeout(handler);
+    return () => clearTimeout(debounceTimer.current);
   }, [historyFrom, historyTo, historyQuery, loadHistory]);
+
+  // Navigate pages
+  const goToPage = useCallback((page) => {
+    setCurrentPage(page);
+    loadHistory(page);
+  }, [loadHistory]);
+
+  const nextPage = useCallback(() => {
+    if (currentPage < totalPages) goToPage(currentPage + 1);
+  }, [currentPage, totalPages, goToPage]);
+
+  const prevPage = useCallback(() => {
+    if (currentPage > 1) goToPage(currentPage - 1);
+  }, [currentPage, goToPage]);
 
   // ── Save a batch record to MongoDB ───────────────────────────
   const saveToHistory = useCallback(async (data) => {
@@ -63,19 +96,24 @@ export function useBatchHistory() {
       await fetch(`/api/history?id=${id}`, { method: "DELETE" });
       setHistory((prev) => prev.filter((row) => String(row.id) !== String(id)));
       setHistoryDetails((d) => (d && String(d.id) === String(id) ? null : d));
+      setTotalCount((c) => Math.max(0, c - 1));
     } catch (err) {
       console.error("deleteFromHistory error:", err);
     }
   }, []);
 
-  // ── Clear all — just reloads with no records (admin action) ──
+  // ── Clear all (1 DB call — instant even for 70,000+ records) ──
   const clearAllHistory = useCallback(async () => {
-    // Remove all records one by one (simple approach)
-    for (const row of history) {
-      await fetch(`/api/history?id=${row.id}`, { method: "DELETE" });
+    try {
+      await fetch("/api/history?all=true", { method: "DELETE" });
+      setHistory([]);
+      setTotalCount(0);
+      setCurrentPage(1);
+      setTotalPages(1);
+    } catch (err) {
+      console.error("clearAllHistory error:", err);
     }
-    setHistory([]);
-  }, [history]);
+  }, []);
 
   // ── Date quick filters ───────────────────────────────────────
   const setToday = useCallback(() => {
@@ -106,7 +144,6 @@ export function useBatchHistory() {
     setHistoryTo("");
   }, []);
 
-  // No local filtering needed anymore, constant reference for compatibility
   const filteredHistory = history;
 
   return {
@@ -117,7 +154,14 @@ export function useBatchHistory() {
     historyFrom,     setHistoryFrom,
     historyTo,       setHistoryTo,
     historyDetails,  setHistoryDetails,
-    loadHistory,
+    // Pagination
+    currentPage,
+    totalPages,
+    totalCount,
+    goToPage,
+    nextPage,
+    prevPage,
+    loadHistory: () => loadHistory(currentPage),
     saveToHistory,
     clearAllHistory,
     deleteFromHistory,
@@ -127,3 +171,4 @@ export function useBatchHistory() {
     clearFilters,
   };
 }
+
