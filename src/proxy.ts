@@ -53,7 +53,12 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // /admin → admin role only
+  // ── ADMIN GUARD: Admins belong in /admin, never on the operator page ──
+  if (session!.role === "admin" && !pathname.startsWith("/admin") && !pathname.startsWith("/api")) {
+    return NextResponse.redirect(new URL("/admin", request.url));
+  }
+
+  // /admin → operator role blocked
   if (pathname.startsWith("/admin") && session!.role !== "admin") {
     return NextResponse.redirect(new URL("/", request.url));
   }
