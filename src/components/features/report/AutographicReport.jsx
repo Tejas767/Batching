@@ -345,7 +345,7 @@ function ClassicReportLayout({ entry, targets, reportData, batchSize = 0.5 }) {
         }
 
         .pm-col-shift {
-          transform: translateX(-7mm);
+          transform: translateX(-8mm);
         }
 
         .mm10-col-shift {
@@ -353,7 +353,7 @@ function ClassicReportLayout({ entry, targets, reportData, batchSize = 0.5 }) {
         }
 
         .moi-col-shift {
-          transform: translateX(-3.5mm) translateY(1mm);
+          transform: translateX(-3.5mm);
         }
 
         .col-row-shift {
