@@ -13,7 +13,8 @@ export function BatchHistoryFilters({
   query, onQueryChange,
   dateFrom, onDateFromChange,
   dateTo,   onDateToChange,
-  onToday, onLast7Days, onThisMonth, onClear, onClearAll,
+  onToday, onLast7Days, onThisMonth, onClear, onClearAll, onExport,
+  isLoadingExport = false,
   resultCount,
 }) {
   return (
@@ -59,6 +60,16 @@ export function BatchHistoryFilters({
         <Button variant="ghost" size="sm" onClick={onToday}>Today</Button>
         <Button variant="ghost" size="sm" onClick={onLast7Days}>Last 7 Days</Button>
         <Button variant="ghost" size="sm" onClick={onThisMonth}>This Month</Button>
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={onExport}
+          loading={isLoadingExport}
+          disabled={isLoadingExport}
+          className="bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-100"
+        >
+          {isLoadingExport ? "Preparing..." : "Download CSV"}
+        </Button>
         <Button variant="secondary" size="sm" onClick={onClear}>Clear</Button>
         <Button
           variant="danger"

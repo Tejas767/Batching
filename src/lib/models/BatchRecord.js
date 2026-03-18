@@ -46,11 +46,15 @@ const BatchRecordSchema = new Schema(
 );
 
 // ── Indexes for fast queries ───────────────────────
+// PRIMARY: Most queries are "get my records sorted newest first"
+// This compound index covers the entire paginated query without scanning the collection
 BatchRecordSchema.index({ userId: 1, createdAt: -1 });
+
+// SEARCH: Text index for fast $regex searches across key fields
 BatchRecordSchema.index({ docketNo: 1 });
 BatchRecordSchema.index({ customerName: 1 });
 BatchRecordSchema.index({ site: 1 });
 BatchRecordSchema.index({ truckNumber: 1 });
-BatchRecordSchema.index({ createdAt: -1 });
+BatchRecordSchema.index({ grade: 1 });
 
 export default models.BatchRecord || model("BatchRecord", BatchRecordSchema);

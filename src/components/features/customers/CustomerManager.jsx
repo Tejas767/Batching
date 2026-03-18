@@ -52,6 +52,7 @@ export function CustomerManager({
         <form onSubmit={handleSubmit} className="mb-10 flex flex-col md:flex-row items-end gap-4">
           <div className="flex-1 w-full">
             <Input
+              id="customer-name"
               label="Customer Name"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -59,6 +60,7 @@ export function CustomerManager({
           </div>
           <div className="flex-1 w-full">
             <Input
+              id="customer-site"
               label="Default Site"
               value={site}
               onChange={(e) => setSite(e.target.value)}
@@ -108,9 +110,9 @@ export function CustomerManager({
                     onClick={() => {
                       if (confirm("Delete this customer?")) onDelete(customer._id);
                     }}
-                    className="p-2 text-stone-400 hover:text-red-600 transition-colors rounded-lg hover:bg-red-50"
+                    className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-red-600 hover:bg-red-50 transition-colors rounded-lg border border-red-100 hover:border-red-200"
                   >
-                    <Trash2 size={16} />
+                    Delete
                   </button>
                 </div>
               </motion.div>

@@ -27,9 +27,11 @@ export async function GET(request) {
     const search = searchParams.get("search");
 
     // ── Pagination params ──────────────────────────
-    const page  = Math.max(1, parseInt(searchParams.get("page")  || "1",  10));
-    const limit = Math.min(200, Math.max(1, parseInt(searchParams.get("limit") || "50", 10)));
-    const skip  = (page - 1) * limit;
+    const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
+    const MAX_LIMIT = 300000;
+    const requestedLimit = parseInt(searchParams.get("limit") || "50", 10);
+    const limit = Math.min(MAX_LIMIT, Math.max(1, requestedLimit));
+    const skip = (page - 1) * limit;
 
     const query = { userId: session.id };
 
@@ -50,8 +52,11 @@ export async function GET(request) {
       ];
     }
 
-    // Count total matching records (for pagination UI)
-    const total = await BatchRecord.countDocuments(query);
+    // Count total matching records
+    const hasFilters = !!(from || to || search);
+    const total = hasFilters
+      ? await BatchRecord.countDocuments(query)
+      : await BatchRecord.countDocuments({ userId: session.id });
 
     const records = await BatchRecord
       .find(query)
@@ -155,15 +160,12 @@ export async function DELETE(request) {
     const id      = searchParams.get("id");
     const all     = searchParams.get("all") === "true";
 
-    // ── Bulk delete all (single DB call, instant) ──────────────
     if (all) {
-      // Operators can only delete their own; admins can delete anyone's
       const filter = session.role === "admin" ? {} : { userId: session.id };
       const result = await BatchRecord.deleteMany(filter);
       return Response.json({ data: { deleted: result.deletedCount } });
     }
 
-    // ── Single record delete ───────────────────────────────────
     if (!id) {
       return Response.json({ error: "id or all=true is required" }, { status: 400 });
     }

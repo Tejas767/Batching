@@ -101,10 +101,15 @@ body {
 @media print {
   @page {
     size: A4;
-    margin: 1cm;
+    margin: 0;
   }
   body, html {
     background-color: white !important;
     background: white !important;
+  }
+
+  /* Hide toast notifications in print */
+  [data-sonner-toaster] {
+    display: none !important;
   }
 }

@@ -15,7 +15,7 @@ const defaultEntry = {
   truckNumber: "",
   batchStart: "",
   batchStop: "",
-  plantSN: "3851",
+  plantSN: "",
 };
 
 export function useBatchEntry(user = null) {
@@ -76,7 +76,7 @@ export function useBatchEntry(user = null) {
         });
         if (res.ok) {
           lastSavedCloudSN.current = currentVal;
-          toast.success("Settings synced to cloud", { id: "cloud-sync" });
+          // toast.success("Settings synced to cloud", { id: "cloud-sync" });
         }
       } catch (err) {
         console.error("Cloud Sync Error:", err);

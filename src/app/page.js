@@ -83,7 +83,7 @@ export default function Home() {
     historyFrom, setHistoryFrom, historyTo, setHistoryTo,
     historyDetails, setHistoryDetails,
     loadHistory, saveToHistory, clearAllHistory, deleteFromHistory,
-    setToday, setLast7Days, setThisMonth, clearFilters,
+    setToday, setLast7Days, setThisMonth, clearFilters, exportToCSV, isExporting,
     currentPage, totalPages, totalCount, nextPage, prevPage, goToPage,
   } = useBatchHistory();
 
@@ -93,6 +93,16 @@ export default function Home() {
   // Report data computed deterministically from entry + targets
   const reportData = useReportData(entry, targets, batchSize, differences);
 
+  // ── Field update wrapper ──────────────────────
+  // If we are viewing a report (lastBatch exists), we should update it too
+  // so the screen reflect changes and printing works correctly.
+  const handleUpdateField = (key, value) => {
+    updateField(key, value);
+    if (lastBatch) {
+      setLastBatch(prev => prev ? { ...prev, [key]: value } : null);
+    }
+  };
+
   // Data is loaded automatically by the hooks on mount.
   useEffect(() => {
     // No-op - data loading is internal to hooks now
@@ -100,22 +110,25 @@ export default function Home() {
 
   // ── Print / Stop handler ───────────────────────────
   const handlePrint = () => {
-    const dataToPrint = lastBatch || {
-      ...entry,
-      mixDesign: targets,
-      batchSize,
-      rows: reportData.rows,
-      totals: reportData.totals,
-      setWeights: reportData.setWeights,
-    };
+    // 1. If we are on ENTRY tab, we specifically want the LAST COMPLETED batch
+    // If lastBatch is null (session refresh), try to use the most recent history record
+    let dataToPrint = lastBatch;
+    if (!dataToPrint && filteredHistory && filteredHistory.length > 0) {
+      dataToPrint = filteredHistory[0];
+      setLastBatch(dataToPrint); // Sync state so print layout updates
+    }
 
-    saveToHistory(dataToPrint).then(loadHistory);
+    // 2. If STILL null and we are on ENTRY tab, there's nothing to print
+    if (!dataToPrint && activeTab === "ENTRY") {
+      toast.error("No recent batch records found.");
+      return;
+    }
+
+    // 3. Print the hidden layout (which now uses dataToPrint)
     if (typeof window !== "undefined") {
       setTimeout(() => {
         window.print();
-        // If printing from report tab after a stop, we've already incremented
-        if (activeTab === "ENTRY") resetForm();
-      }, 200);
+      }, 300);
     }
   };
 
@@ -272,7 +285,7 @@ export default function Home() {
               batchSize={lastBatch?.batchSize || batchSize}
               onPrint={handlePrint}
               onSaveToHistory={handleSaveToHistory}
-              onUpdateField={updateField}
+              onUpdateField={handleUpdateField}
             />
           )}
 
@@ -301,6 +314,8 @@ export default function Home() {
                 onThisMonth={setThisMonth}
                 onClear={clearFilters}
                 onClearAll={() => setShowClearAll(true)}
+                onExport={exportToCSV}
+                isLoadingExport={isExporting}
                 resultCount={totalCount}
               />
 

@@ -7,13 +7,13 @@
 
 import { ChevronDown } from "lucide-react";
 
-export function Input({ label, valid = null, className = "", ...inputProps }) {
+export function Input({ label, id, valid = null, className = "", ...inputProps }) {
   return (
-    <label className="block">
+    <div className="block">
       {label && (
-        <span className="mb-2 block text-xs font-semibold uppercase tracking-widest text-muted">
+        <label htmlFor={id} className="mb-2 block text-xs font-semibold uppercase tracking-widest text-muted">
           {label}
-        </span>
+        </label>
       )}
       <div
         className={[
@@ -25,11 +25,13 @@ export function Input({ label, valid = null, className = "", ...inputProps }) {
         ].join(" ")}
       >
         <input
+          id={id}
+          name={inputProps.name || id}
           className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-foreground outline-none placeholder:text-stone-400"
           {...inputProps}
         />
       </div>
-    </label>
+    </div>
   );
 }
 
@@ -53,13 +55,13 @@ export function DisplayField({ label, value, muted = false }) {
   );
 }
 
-export function Select({ label, options, valid = null, className = "", ...selectProps }) {
+export function Select({ label, id, options, valid = null, className = "", ...selectProps }) {
   return (
-    <label className="block">
+    <div className="block">
       {label && (
-        <span className="mb-2 block text-xs font-semibold uppercase tracking-widest text-muted">
+        <label htmlFor={id} className="mb-2 block text-xs font-semibold uppercase tracking-widest text-muted">
           {label}
-        </span>
+        </label>
       )}
       <div
         className={[
@@ -71,11 +73,13 @@ export function Select({ label, options, valid = null, className = "", ...select
         ].join(" ")}
       >
         <select
+          id={id}
+          name={selectProps.name || id}
           className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-foreground outline-none appearance-none cursor-pointer pr-8"
           {...selectProps}
         >
-          {options.map((opt) => (
-            <option key={opt} value={opt}>
+          {options.map((opt, idx) => (
+            <option key={`${opt}-${idx}`} value={opt}>
               {opt}
             </option>
           ))}
@@ -84,6 +88,6 @@ export function Select({ label, options, valid = null, className = "", ...select
           <ChevronDown size={14} className="text-muted" />
         </div>
       </div>
-    </label>
+    </div>
   );
 }

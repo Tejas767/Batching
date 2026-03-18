@@ -54,8 +54,8 @@ export const reportColumns = [
   // Silica
   { key: "silica", label: "Silica", group: "Silica",        variance: 1 },
   // Admixture
-  { key: "admix1", label: "ADM1",   group: "Admixture",     variance: 0.07 },
-  { key: "admix2", label: "ADM2",   group: "Admixture",     variance: 0.07 },
+  { key: "admix1", label: "ADM1", group: "Admixture",   variance: 0.07 },
+  { key: "admix2", label: "ADM2", group: "Admixture",   variance: 0.07 },
 ];
 
 // Display order for column groups in the report header

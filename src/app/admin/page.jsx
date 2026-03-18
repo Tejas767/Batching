@@ -11,17 +11,17 @@ import { useSession } from "@/hooks/useSession";
 
 // ── Subscription preset options ───────────────────────────────
 const PRESETS = [
-  { label: "1 Month",  days: 30  },
-  { label: "3 Months", days: 90  },
+  { label: "1 Month", days: 30 },
+  { label: "3 Months", days: 90 },
   { label: "6 Months", days: 180 },
-  { label: "1 Year",   days: 365 },
+  { label: "1 Year", days: 365 },
 ];
 
 // ── Helpers ───────────────────────────────────────────────────
 function daysColor(days) {
-  if (days === null)  return "text-brand-1 bg-brand-1/10";
-  if (days <= 5)      return "text-red-600 bg-red-50";
-  if (days <= 15)     return "text-amber-600 bg-amber-50";
+  if (days === null) return "text-brand-1 bg-brand-1/10";
+  if (days <= 5) return "text-red-600 bg-red-50";
+  if (days <= 15) return "text-amber-600 bg-amber-50";
   return "text-emerald-700 bg-emerald-50";
 }
 
@@ -32,11 +32,11 @@ function formatDate(d) {
 
 // ── Modal: Create User ────────────────────────────────────────
 function CreateUserModal({ onClose, onCreated }) {
-  const [form, setForm]     = useState({ username: "", password: "", displayName: "", subscriptionDays: 30, notes: "" });
+  const [form, setForm] = useState({ username: "", password: "", displayName: "", subscriptionDays: 30, notes: "" });
   const [custom, setCustom] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError]   = useState("");
+  const [error, setError] = useState("");
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -64,30 +64,30 @@ function CreateUserModal({ onClose, onCreated }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-      <motion.div initial={{ opacity:0,scale:0.95 }} animate={{ opacity:1,scale:1 }} exit={{ opacity:0,scale:0.95 }}
+      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
         className="w-full max-w-md rounded-3xl bg-white p-8 shadow-card-lg">
-        <h2 className="text-xl font-semibold text-brand-1 mb-6 flex items-center gap-2"><Plus size={18}/> Create Operator</h2>
+        <h2 className="text-xl font-semibold text-brand-1 mb-6 flex items-center gap-2"><Plus size={18} /> Create Operator</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Username */}
           <Field label="Username" required>
-            <input required value={form.username} onChange={e=>set("username",e.target.value)}
+            <input required value={form.username} onChange={e => set("username", e.target.value)}
               placeholder="e.g. john_operator" className={inputCls} />
           </Field>
           {/* Display Name */}
           <Field label="Display Name">
-            <input value={form.displayName} onChange={e=>set("displayName",e.target.value)}
+            <input value={form.displayName} onChange={e => set("displayName", e.target.value)}
               placeholder="e.g. John Doe" className={inputCls} />
           </Field>
           {/* Password */}
           <Field label="Password" required>
             <div className="relative">
-              <input 
-                required 
-                type={showPassword ? "text" : "password"} 
-                value={form.password} 
-                onChange={e=>set("password",e.target.value)}
-                placeholder="Min. 6 characters" 
-                className={`${inputCls} pr-12`} 
+              <input
+                required
+                type={showPassword ? "text" : "password"}
+                value={form.password}
+                onChange={e => set("password", e.target.value)}
+                placeholder="Min. 6 characters"
+                className={`${inputCls} pr-12`}
               />
               <button
                 type="button"
@@ -102,38 +102,36 @@ function CreateUserModal({ onClose, onCreated }) {
           {/* Subscription */}
           <Field label="Subscription Period">
             <div className="flex flex-wrap gap-2 mb-2">
-              {PRESETS.map(p=>(
+              {PRESETS.map(p => (
                 <button type="button" key={p.days}
-                  onClick={()=>{ set("subscriptionDays",p.days); setCustom(false); }}
-                  className={`rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
-                    form.subscriptionDays===p.days && !custom
+                  onClick={() => { set("subscriptionDays", p.days); setCustom(false); }}
+                  className={`rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${form.subscriptionDays === p.days && !custom
                       ? "border-brand-1 bg-brand-1 text-white"
                       : "border-border text-stone-600 hover:border-brand-1"}`}>
                   {p.label}
                 </button>
               ))}
-              <button type="button" onClick={()=>setCustom(true)}
-                className={`rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
-                  custom ? "border-brand-1 bg-brand-1 text-white" : "border-border text-stone-600 hover:border-brand-1"}`}>
+              <button type="button" onClick={() => setCustom(true)}
+                className={`rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${custom ? "border-brand-1 bg-brand-1 text-white" : "border-border text-stone-600 hover:border-brand-1"}`}>
                 Custom
               </button>
             </div>
             {custom && (
               <input type="number" min="1" value={form.subscriptionDays}
-                onChange={e=>set("subscriptionDays",Number(e.target.value))}
+                onChange={e => set("subscriptionDays", Number(e.target.value))}
                 placeholder="Enter days" className={inputCls} />
             )}
             <p className="text-xs text-muted mt-1">Account expires in <strong>{form.subscriptionDays} days</strong></p>
           </Field>
           {/* Notes */}
           <Field label="Notes (optional)">
-            <input value={form.notes} onChange={e=>set("notes",e.target.value)}
+            <input value={form.notes} onChange={e => set("notes", e.target.value)}
               placeholder="Any notes about this user" className={inputCls} />
           </Field>
 
           {error && (
-            <motion.div 
-              initial={{ opacity: 0, y: -10 }} 
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               className="flex items-center gap-2 rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-600 border border-red-100"
             >
@@ -160,11 +158,11 @@ function CreateUserModal({ onClose, onCreated }) {
 
 // ── Modal: Manage Subscription ───────────────────────────────
 function RenewModal({ user, onClose, onRenewed }) {
-  const [days, setDays]       = useState(30);
-  const [mode, setMode]       = useState("add"); // "add" or "set"
-  const [custom, setCustom]   = useState(false);
+  const [days, setDays] = useState(30);
+  const [mode, setMode] = useState("add"); // "add" or "set"
+  const [custom, setCustom] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError]     = useState("");
+  const [error, setError] = useState("");
 
   const handleRenew = async () => {
     setError(""); setLoading(true);
@@ -185,9 +183,9 @@ function RenewModal({ user, onClose, onRenewed }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-      <motion.div initial={{ opacity:0,scale:0.95 }} animate={{ opacity:1,scale:1 }} exit={{ opacity:0,scale:0.95 }}
+      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
         className="w-full max-w-sm rounded-3xl bg-white p-8 shadow-card-lg">
-        <h2 className="text-xl font-semibold text-brand-1 mb-1 flex items-center gap-2"><CalendarDays size={18}/> Manage Subscription</h2>
+        <h2 className="text-xl font-semibold text-brand-1 mb-1 flex items-center gap-2"><CalendarDays size={18} /> Manage Subscription</h2>
         <p className="text-sm text-muted mb-6">User: <strong>{user.username}</strong></p>
 
         {/* Mode Toggle */}
@@ -203,29 +201,27 @@ function RenewModal({ user, onClose, onRenewed }) {
         </div>
 
         <div className="flex flex-wrap gap-2 mb-4">
-          {PRESETS.map(p=>(
+          {PRESETS.map(p => (
             <button key={p.days} type="button"
-              onClick={()=>{ setDays(p.days); setCustom(false); }}
-              className={`rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
-                days===p.days && !custom
+              onClick={() => { setDays(p.days); setCustom(false); }}
+              className={`rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${days === p.days && !custom
                   ? "border-brand-1 bg-brand-1 text-white"
                   : "border-border text-stone-600 hover:border-brand-1"}`}>
               {p.label}
             </button>
           ))}
-          <button type="button" onClick={()=>setCustom(true)}
-            className={`rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
-              custom ? "border-brand-1 bg-brand-1 text-white" : "border-border text-stone-600 hover:border-brand-1"}`}>
+          <button type="button" onClick={() => setCustom(true)}
+            className={`rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${custom ? "border-brand-1 bg-brand-1 text-white" : "border-border text-stone-600 hover:border-brand-1"}`}>
             Custom
           </button>
         </div>
         {custom && (
-          <input type="number" min="0" value={days} onChange={e=>setDays(Number(e.target.value))}
+          <input type="number" min="0" value={days} onChange={e => setDays(Number(e.target.value))}
             placeholder="Enter days" className={`${inputCls} mb-3`} />
         )}
-        
+
         <p className="text-xs text-muted mb-6">
-          {mode === "add" 
+          {mode === "add"
             ? `Extending existing subscription by adding `
             : `Overriding total remaining time to `}
           <strong>{days} days</strong>.
@@ -252,9 +248,9 @@ function RenewModal({ user, onClose, onRenewed }) {
 function ResetPasswordModal({ user, onClose }) {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading]   = useState(false);
-  const [success, setSuccess]   = useState(false);
-  const [error, setError]       = useState("");
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState("");
 
   const handleReset = async () => {
     if (!password || password.length < 6) { setError("Password must be at least 6 characters"); return; }
@@ -276,9 +272,9 @@ function ResetPasswordModal({ user, onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-      <motion.div initial={{ opacity:0,scale:0.95 }} animate={{ opacity:1,scale:1 }} exit={{ opacity:0,scale:0.95 }}
+      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
         className="w-full max-w-sm rounded-3xl bg-white p-8 shadow-card-lg">
-        <h2 className="text-xl font-semibold text-brand-1 mb-1 flex items-center gap-2"><KeyRound size={18}/> Reset Password</h2>
+        <h2 className="text-xl font-semibold text-brand-1 mb-1 flex items-center gap-2"><KeyRound size={18} /> Reset Password</h2>
         <p className="text-sm text-muted mb-6">User: <strong>{user.username}</strong></p>
         {success ? (
           <div className="text-center py-4">
@@ -289,12 +285,12 @@ function ResetPasswordModal({ user, onClose }) {
         ) : (
           <>
             <div className="relative mb-3">
-              <input 
-                type={showPassword ? "text" : "password"} 
-                value={password} 
-                onChange={e=>setPassword(e.target.value)}
-                placeholder="Min. 6 characters" 
-                className={`${inputCls} pr-12`} 
+              <input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                placeholder="Min. 6 characters"
+                className={`${inputCls} pr-12`}
               />
               <button
                 type="button"
@@ -306,8 +302,8 @@ function ResetPasswordModal({ user, onClose }) {
               </button>
             </div>
             {error && (
-              <motion.div 
-                initial={{ opacity: 0, y: -10 }} 
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="flex items-center gap-2 rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-600 border border-red-100 mb-4"
               >
@@ -349,11 +345,11 @@ function Field({ label, required, children }) {
 // ── Main Admin Page ───────────────────────────────────────────
 export default function AdminPage() {
   const { user, isLoaded, isSignedIn } = useSession({ redirectTo: "/login" });
-  const [users, setUsers]         = useState([]);
-  const [loading, setLoading]     = useState(true);
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
-  const [renewUser, setRenewUser]   = useState(null);
-  const [resetUser, setResetUser]   = useState(null);
+  const [renewUser, setRenewUser] = useState(null);
+  const [resetUser, setResetUser] = useState(null);
   const [deleteUser, setDeleteUser] = useState(null);
   const [togglingId, setTogglingId] = useState(null);
 
@@ -418,9 +414,9 @@ export default function AdminPage() {
   };
 
   // Stats
-  const activeCount  = users.filter(u => u.isActive).length;
+  const activeCount = users.filter(u => u.isActive).length;
   const expiringSoon = users.filter(u => u.daysRemaining !== null && u.daysRemaining <= 7 && u.daysRemaining > 0).length;
-  const expired      = users.filter(u => u.daysRemaining !== null && u.daysRemaining === 0).length;
+  const expired = users.filter(u => u.daysRemaining !== null && u.daysRemaining === 0).length;
 
   return (
     <main className="min-h-screen bg-[#FDFCF7]">
@@ -449,10 +445,10 @@ export default function AdminPage() {
         {/* Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
-            { label: "Total Operators", value: users.length,   color: "text-brand-1",    bg: "bg-brand-1/10" },
-            { label: "Active Accounts", value: activeCount,    color: "text-emerald-700", bg: "bg-emerald-50" },
-            { label: "Expiring Soon",   value: expiringSoon,   color: "text-amber-600",   bg: "bg-amber-50" },
-            { label: "Expired",         value: expired,        color: "text-red-600",     bg: "bg-red-50" },
+            { label: "Total Operators", value: users.length, color: "text-brand-1", bg: "bg-brand-1/10" },
+            { label: "Active Accounts", value: activeCount, color: "text-emerald-700", bg: "bg-emerald-50" },
+            { label: "Expiring Soon", value: expiringSoon, color: "text-amber-600", bg: "bg-amber-50" },
+            { label: "Expired", value: expired, color: "text-red-600", bg: "bg-red-50" },
           ].map(s => (
             <div key={s.label} className={`rounded-2xl border border-border ${s.bg} p-5`}>
               <p className={`text-3xl font-bold ${s.color}`}>{s.value}</p>
@@ -492,15 +488,15 @@ export default function AdminPage() {
               <table className="min-w-full border-separate border-spacing-0 text-sm">
                 <thead>
                   <tr className="bg-brand-1 text-white text-left">
-                    {["User","Status","Subscription","Expires","Actions"].map((h,i)=>(
-                      <th key={h} className={`px-5 py-3.5 text-xs font-semibold uppercase tracking-widest ${i===0?"rounded-tl-xl":""} ${i===4?"rounded-tr-xl text-center":""}`}>{h}</th>
+                    {["User", "Status", "Subscription", "Expires", "Actions"].map((h, i) => (
+                      <th key={h} className={`px-5 py-3.5 text-xs font-semibold uppercase tracking-widest ${i === 0 ? "rounded-tl-xl" : ""} ${i === 4 ? "rounded-tr-xl text-center" : ""}`}>{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {users.map((user, idx) => (
                     <motion.tr key={user.id}
-                      initial={{ opacity:0, y:4 }} animate={{ opacity:1, y:0 }} transition={{ delay: idx*0.03 }}
+                      initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.03 }}
                       className={idx % 2 === 0 ? "bg-white" : "bg-surface"}>
                       <td className="border-b border-border px-5 py-3.5">
                         <p className="font-semibold text-brand-1">{user.username}</p>
@@ -527,9 +523,9 @@ export default function AdminPage() {
                       </td>
                       <td className="border-b border-border px-5 py-3.5">
                         <div className="flex items-center justify-center gap-1.5">
-                          <ActionBtn onClick={() => setRenewUser(user)} color="emerald" icon={<CalendarDays size={12}/>} label="Renew" />
-                          <ActionBtn onClick={() => setResetUser(user)} color="amber" icon={<KeyRound size={12}/>} label="Reset PW" />
-                          <ActionBtn onClick={() => setDeleteUser(user)} color="red" icon={<Trash2 size={12}/>} label="Delete" />
+                          <ActionBtn onClick={() => setRenewUser(user)} color="emerald" icon={<CalendarDays size={12} />} label="Renew" />
+                          <ActionBtn onClick={() => setResetUser(user)} color="amber" icon={<KeyRound size={12} />} label="Reset PW" />
+                          <ActionBtn onClick={() => setDeleteUser(user)} color="red" icon={<Trash2 size={12} />} label="Delete" />
                         </div>
                       </td>
                     </motion.tr>
@@ -542,7 +538,7 @@ export default function AdminPage() {
             <div className="md:hidden flex flex-col gap-3">
               {users.map((user, idx) => (
                 <motion.div key={user.id}
-                  initial={{ opacity:0, y:4 }} animate={{ opacity:1, y:0 }} transition={{ delay: idx*0.03 }}
+                  initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.03 }}
                   className="rounded-2xl border border-border bg-white p-4 space-y-3">
                   <div className="flex items-start justify-between">
                     <div>
@@ -551,7 +547,7 @@ export default function AdminPage() {
                     </div>
                     <button onClick={() => handleToggle(user)} disabled={togglingId === user.id}
                       className="flex items-center gap-1 disabled:opacity-50">
-                      {user.isActive ? <ToggleRight size={28} className="text-emerald-500"/> : <ToggleLeft size={28} className="text-stone-300"/>}
+                      {user.isActive ? <ToggleRight size={28} className="text-emerald-500" /> : <ToggleLeft size={28} className="text-stone-300" />}
                     </button>
                   </div>
                   <div className="flex items-center gap-2 flex-wrap">
@@ -561,9 +557,9 @@ export default function AdminPage() {
                     <span className="text-xs text-muted">Expires: {formatDate(user.expiresAt)}</span>
                   </div>
                   <div className="flex gap-2 pt-1 border-t border-border">
-                    <ActionBtn onClick={() => setRenewUser(user)} color="emerald" icon={<CalendarDays size={12}/>} label="Renew" full />
-                    <ActionBtn onClick={() => setResetUser(user)} color="amber" icon={<KeyRound size={12}/>} label="Reset PW" full />
-                    <ActionBtn onClick={() => setDeleteUser(user)} color="red" icon={<Trash2 size={12}/>} label="Delete" full />
+                    <ActionBtn onClick={() => setRenewUser(user)} color="emerald" icon={<CalendarDays size={12} />} label="Renew" full />
+                    <ActionBtn onClick={() => setResetUser(user)} color="amber" icon={<KeyRound size={12} />} label="Reset PW" full />
+                    <ActionBtn onClick={() => setDeleteUser(user)} color="red" icon={<Trash2 size={12} />} label="Delete" full />
                   </div>
                 </motion.div>
               ))}
@@ -578,7 +574,7 @@ export default function AdminPage() {
           <CreateUserModal
             key="create-modal"
             onClose={() => setShowCreate(false)}
-            onCreated={(u) => { setUsers(prev => [u,...prev]); setShowCreate(false); loadUsers(); }}
+            onCreated={(u) => { setUsers(prev => [u, ...prev]); setShowCreate(false); loadUsers(); }}
           />
         )}
         {renewUser && (
@@ -618,8 +614,8 @@ export default function AdminPage() {
 function ActionBtn({ onClick, color, icon, label, full }) {
   const colors = {
     emerald: "border-emerald-200 text-emerald-700 hover:bg-emerald-50",
-    amber:   "border-amber-200 text-amber-700 hover:bg-amber-50",
-    red:     "border-red-200 text-red-600 hover:bg-red-50",
+    amber: "border-amber-200 text-amber-700 hover:bg-amber-50",
+    red: "border-red-200 text-red-600 hover:bg-red-50",
   };
   return (
     <button onClick={onClick}

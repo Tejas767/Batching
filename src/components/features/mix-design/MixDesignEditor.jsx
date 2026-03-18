@@ -30,8 +30,10 @@ export function MixDesignEditor({
         action={
           <div className="flex items-center gap-6">
             <div className="flex flex-col items-start gap-1">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-muted">Batch Size (M³)</span>
+              <label htmlFor="batch-size-input" className="text-[10px] font-bold uppercase tracking-wider text-muted">Batch Size (M³)</label>
               <input
+                id="batch-size-input"
+                name="batchSize"
                 type="number"
                 step="0.1"
                 min="0.1"
@@ -94,6 +96,7 @@ export function MixDesignEditor({
                   >
                     <input
                       id={`mix-${grade}-${col.key}`}
+                      name={`mix-${grade}-${col.key}`}
                       type="number"
                       inputMode="decimal"
                       value={mixDesign[grade]?.[col.key] ?? ""}
@@ -114,6 +117,7 @@ export function MixDesignEditor({
                 <td key={`diff-${col.key}`} className="px-3 py-2 text-center">
                   <input
                     id={`diff-${col.key}`}
+                    name={`diff-${col.key}`}
                     type="number"
                     step="0.1"
                     min="0"

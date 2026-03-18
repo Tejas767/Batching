@@ -7,12 +7,14 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
+import { reportColumns } from "@/constants/mixConfig";
 
 const PAGE_SIZE = 50;
 
 export function useBatchHistory() {
   const [history, setHistory]           = useState([]);
   const [loading, setLoading]           = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const [historyQuery, setHistoryQuery] = useState("");
   const [historyFrom, setHistoryFrom]   = useState("");
   const [historyTo, setHistoryTo]       = useState("");
@@ -144,6 +146,72 @@ export function useBatchHistory() {
     setHistoryTo("");
   }, []);
 
+  // ── Export to CSV (Downloads ALL filtered records, not just current page) ──
+  const exportToCSV = useCallback(async () => {
+    setIsExporting(true);
+    try {
+      const params = new URLSearchParams();
+      if (historyFrom)         params.set("from",   historyFrom);
+      if (historyTo)           params.set("to",     historyTo);
+      if (historyQuery.trim()) params.set("search", historyQuery);
+      params.set("limit", "300000"); // Request a higher limit for export
+      
+      const res  = await fetch(`/api/history?${params.toString()}`);
+      const json = await res.json();
+      const allRecords = json.data || [];
+
+      if (!allRecords.length) {
+        alert("No records to export.");
+        return;
+      }
+
+      // 2. Prepare Detailed CSV Headers
+      // We want Docket Info + Material Set/Actual weights
+      const materialCols = reportColumns.filter(c => c.key !== "pm" && c.key !== "moi");
+      
+      const header = [
+        "Date/Time", "Docket No", "Customer", "Site", "Grade", "Qty (m3)", "Truck", "Driver", "Start Time", "Stop Time",
+        ...materialCols.flatMap(c => [`Set ${c.label}`, `Act ${c.label}`])
+      ];
+
+      const rows = allRecords.map(r => {
+        const metadata = [
+          `"${new Date(r.created_at).toLocaleString('en-IN')}"`,
+          `"${r.docketNo || ""}"`,
+          `"${r.customerName || ""}"`,
+          `"${r.site || ""}"`,
+          `"${r.grade || ""}"`,
+          `"${r.qty || "0"}"`,
+          `"${r.truckNumber || ""}"`,
+          `"${r.truckDriver || ""}"`,
+          `"${r.batchStart || ""}"`,
+          `"${r.batchStop || ""}"`
+        ];
+
+        const weights = materialCols.flatMap(c => [
+          r.setWeights?.[c.key] || "0",
+          r.totals?.[c.key] || "0"
+        ]);
+
+        return [...metadata, ...weights];
+      });
+
+      const csvContent = [header, ...rows].map(e => e.join(",")).join("\n");
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `Batch_History_${new Date().toISOString().slice(0, 10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      console.error("exportToCSV error:", err);
+    } finally {
+      setIsExporting(false);
+    }
+  }, [historyFrom, historyTo, historyQuery]);
+
   const filteredHistory = history;
 
   return {
@@ -169,6 +237,8 @@ export function useBatchHistory() {
     setLast7Days,
     setThisMonth,
     clearFilters,
+    exportToCSV,
+    isExporting,
   };
 }
 

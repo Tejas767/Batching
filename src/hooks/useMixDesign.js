@@ -58,12 +58,12 @@ export function useMixDesign() {
     }
   }, []);
 
-  // Auto-save logic (Debounced) — triggers on any of the three states
+  // Auto-save logic (Debounced 3s) — only fires after user stops editing
   useEffect(() => {
     if (loading) return;
     const timer = setTimeout(() => {
       saveMixDesign(mixDesign, batchSize, differences);
-    }, 1000);
+    }, 3000);
     return () => clearTimeout(timer);
   }, [mixDesign, batchSize, differences, loading, saveMixDesign]);
 

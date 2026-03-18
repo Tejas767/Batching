@@ -163,6 +163,7 @@ export function BatchEntryForm({
       {/* Batch timing matching Row 3 */}
       <motion.div variants={fieldVariants}>
         <Input 
+          id="entry-batchStart"
           label="START TIME" 
           placeholder="Auto"
           value={entry.batchStart} 
@@ -171,6 +172,7 @@ export function BatchEntryForm({
       </motion.div>
       <motion.div variants={fieldVariants}>
         <Input 
+          id="entry-batchStop"
           label="STOP TIME" 
           placeholder="Auto"
           value={entry.batchStop} 
