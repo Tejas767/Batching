@@ -79,7 +79,7 @@ export function useMixDesign() {
   const updateDifference = useCallback((key, value) => {
     setDifferences((prev) => ({
       ...prev,
-      [key]: value === "" ? 0 : Number(value),
+      [key]: value === "" ? "" : Number(value),
     }));
   }, []);
 

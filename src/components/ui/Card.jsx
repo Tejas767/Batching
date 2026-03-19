@@ -26,7 +26,7 @@ export function Card({ children, variant = "default", className = "", animate = 
   return (
     <Comp
       className={[
-        "rounded-3xl p-6 md:p-8",
+        "rounded-3xl p-5 md:p-7",
         variants[variant] ?? variants.default,
         className,
       ].join(" ")}

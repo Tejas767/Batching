@@ -32,6 +32,8 @@ const BatchRecordSchema = new Schema(
     truckNumber:  { type: String, default: "" },
     batchStart:   { type: String, default: "" },
     batchStop:    { type: String, default: "" },
+    plantSN:       { type: String, default: "" },
+    companyName:   { type: String, default: "" },
 
     // ── Report Snapshot (saved at print time) ─────
     mixDesign:    { type: Schema.Types.Mixed, default: {} },

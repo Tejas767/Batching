@@ -108,7 +108,15 @@ export default function Home() {
     // No-op - data loading is internal to hooks now
   }, []);
 
-  // ── Print / Stop handler ───────────────────────────
+  // ── Print / Tab handlers ───────────────────────────
+  const handleViewLastReport = () => {
+    // Sync if needed
+    if (!lastBatch && filteredHistory && filteredHistory.length > 0) {
+      setLastBatch(filteredHistory[0]);
+    }
+    setActiveTab("REPORT");
+  };
+
   const handlePrint = () => {
     // 1. If we are on ENTRY tab, we specifically want the LAST COMPLETED batch
     // If lastBatch is null (session refresh), try to use the most recent history record
@@ -119,9 +127,11 @@ export default function Home() {
     }
 
     // 2. If STILL null and we are on ENTRY tab, there's nothing to print
-    if (!dataToPrint && activeTab === "ENTRY") {
-      toast.error("No recent batch records found.");
-      return;
+    if (!dataToPrint && (activeTab === "ENTRY" || activeTab === "REPORT")) {
+      if (!dataToPrint) {
+        toast.error("No recent batch records found.");
+        return;
+      }
     }
 
     // 3. Print the hidden layout (which now uses dataToPrint)
@@ -156,12 +166,11 @@ export default function Home() {
     // 2. Auto-save to history
     saveToHistory(batchData).then(loadHistory);
 
-    // 3. Redirect
-    setActiveTab("REPORT");
-
-    // 4. Clear entry and increment docket
+    // 3. Clear entry and increment docket (STAY ON ENTRY TAB)
     resetForm();
-    toast.success(`Batch #${finalEntry.docketNo} stopped and saved to history.`);
+    toast.success(`Batch #${finalEntry.docketNo} SAVED ✅`, {
+      description: "Ready for next docket entry."
+    });
   };
 
   const handleSaveToHistory = () => {
@@ -199,9 +208,9 @@ export default function Home() {
   // ── Main authenticated app ───────────────────
   return (
     <PageShell>
-      <div className="print:hidden">
-        <AppHeader />
+      <div className="print:hidden mx-auto w-full max-w-5xl flex flex-col md:flex-row md:items-center md:justify-between gap-6 pt-0 pb-6 md:pb-8">
         <TabNav activeTab={activeTab} onTabChange={setActiveTab} />
+        <AppHeader />
       </div>
 
       {/* Tab content with enter/exit animations — hidden during print */}
@@ -217,7 +226,7 @@ export default function Home() {
         >
           {/* ── ENTRY TAB ─── */}
           {activeTab === "ENTRY" && (
-            <div className="md:mx-auto md:max-w-4xl">
+            <div className="md:mx-auto md:max-w-5xl">
               <div className="rounded-2xl md:rounded-3xl border border-border bg-white p-5 md:p-8 shadow-card">
                 <div className="mb-5 flex items-center justify-between">
                   <h2 className="text-lg md:text-xl font-semibold text-brand-1">Batch Entry</h2>
@@ -232,7 +241,7 @@ export default function Home() {
                   onUpdateField={updateField}
                   onStart={handleStart}
                   onStop={onStopBatch}
-                  onPrint={handlePrint}
+                  onPrint={handleViewLastReport}
                   onSaveToHistory={handleSaveToHistory}
                 />
               </div>
@@ -241,29 +250,34 @@ export default function Home() {
 
           {/* ── CUSTOMER TAB ─── */}
           {activeTab === "CUSTOMERS" && (
-            <CustomerManager
-              customers={customers}
-              onAdd={addCustomer}
-              onDelete={deleteCustomer}
-              onDeleteAll={deleteAllCustomers}
-              loading={customersLoading}
-            />
+            <div className="md:mx-auto md:max-w-5xl w-full">
+              <CustomerManager
+                customers={customers}
+                onAdd={addCustomer}
+                onDelete={deleteCustomer}
+                onDeleteAll={deleteAllCustomers}
+                loading={customersLoading}
+              />
+            </div>
           )}
 
           {/* ── VEHICLE TAB ─── */}
           {activeTab === "VEHICLE" && (
-            <VehicleManager
-              vehicles={vehicles}
-              onAdd={addVehicle}
-              onDelete={deleteVehicle}
-              onDeleteAll={deleteAllVehicles}
-              loading={vehiclesLoading}
-            />
+            <div className="md:mx-auto md:max-w-5xl w-full">
+              <VehicleManager
+                vehicles={vehicles}
+                onAdd={addVehicle}
+                onDelete={deleteVehicle}
+                onDeleteAll={deleteAllVehicles}
+                loading={vehiclesLoading}
+              />
+            </div>
           )}
 
           {/* ── MIX DESIGN TAB ─── */}
           {activeTab === "EDIT" && (
-            <MixDesignEditor
+            <div className="md:mx-auto md:max-w-7xl">
+              <MixDesignEditor
               mixDesign={mixDesign}
               batchSize={batchSize}
               setBatchSize={setBatchSize}
@@ -273,25 +287,28 @@ export default function Home() {
               onUpdateCell={updateCell}
               onSave={() => saveMixDesign(mixDesign, batchSize, differences)}
               onReset={resetMixDesign}
-            />
+              />
+            </div>
           )}
 
           {/* ── REPORT TAB ─── */}
           {activeTab === "REPORT" && (
-            <AutographicReport
-              entry={lastBatch || entry}
-              targets={lastBatch?.mixDesign || targets}
-              reportData={lastBatch || reportData}
-              batchSize={lastBatch?.batchSize || batchSize}
-              onPrint={handlePrint}
-              onSaveToHistory={handleSaveToHistory}
-              onUpdateField={handleUpdateField}
-            />
+            <div className="md:mx-auto md:max-w-5xl">
+              <AutographicReport
+                entry={lastBatch || entry}
+                targets={lastBatch?.mixDesign || targets}
+                reportData={lastBatch || reportData}
+                batchSize={lastBatch?.batchSize || batchSize}
+                onPrint={handlePrint}
+                onSaveToHistory={handleSaveToHistory}
+                onUpdateField={handleUpdateField}
+              />
+            </div>
           )}
 
           {/* ── HISTORY TAB ─── */}
           {activeTab === "HISTORY" && (
-            <div className="rounded-2xl md:rounded-3xl border border-border bg-white p-4 md:p-8 shadow-card space-y-5 md:space-y-6">
+            <div className="md:mx-auto md:max-w-5xl rounded-2xl md:rounded-3xl border border-border bg-white p-4 md:p-8 shadow-card space-y-5 md:space-y-6">
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-lg md:text-xl font-semibold text-brand-1">Batch History</h2>

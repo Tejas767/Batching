@@ -21,7 +21,7 @@ export function TabNav({ activeTab, onTabChange }) {
   return (
     <nav
       aria-label="Main navigation"
-      className="mt-5 md:mt-10 -mx-4 md:mx-0 px-4 md:px-0"
+      className="-mx-4 md:mx-0 px-4 md:px-0"
     >
       {/* Scrollable strip on mobile, flex row on desktop */}
       <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1 md:flex-wrap md:overflow-visible">

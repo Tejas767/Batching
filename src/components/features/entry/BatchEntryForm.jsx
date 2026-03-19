@@ -6,32 +6,22 @@
  */
 "use client";
 
-import { motion } from "framer-motion";
-import { Input, DisplayField, Select } from "@/components/ui/Input";
+import { useRef } from "react";
+import { Input, DisplayField, Select, Combobox } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Play, StopCircle } from "lucide-react";
 import { grades } from "@/constants/mixConfig";
 
 // Form field definitions — matching the new layout
 const FIELDS = [
-  { label: "DOCKET NO",     key: "docketNo",     type: "text" },
-  { label: "CUSTOMER NAME", key: "customerName",  type: "text" },
-  { label: "SITE",          key: "site",          type: "text" },
-  { label: "GRADE",         key: "grade",         type: "text" },
-  { label: "QTY (M³)",      key: "qty",           type: "number" },
-  { label: "TRUCK NUMBER",  key: "truckNumber",   type: "text" },
-  { label: "DRIVER",        key: "truckDriver",   type: "text" },
+  { label: "DOCKET NO",     key: "docketNo",      type: "text",   editable: true },
+  { label: "CUSTOMER NAME", key: "customerName",  type: "text",   editable: true },
+  { label: "SITE",          key: "site",          type: "text",   editable: false },
+  { label: "GRADE",         key: "grade",         type: "text",   editable: true },
+  { label: "QTY (M³)",      key: "qty",           type: "number", editable: true },
+  { label: "TRUCK NUMBER",  key: "truckNumber",   type: "text",   editable: true },
+  { label: "DRIVER",        key: "truckDriver",   type: "text",   editable: false },
 ];
-
-const containerVariants = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.06 } },
-};
-
-const fieldVariants = {
-  hidden: { opacity: 0, y: 10 },
-  show:   { opacity: 1, y: 0, transition: { duration: 0.3, ease: "easeOut" } },
-};
 
 export function BatchEntryForm({ 
   entry, 
@@ -43,14 +33,44 @@ export function BatchEntryForm({
   onPrint, 
   onSaveToHistory 
 }) {
+  // ── Enter-to-focus navigation ──────────────────
+  // We use refs for all editable fields. Site and Driver are skipped.
+  const docketRef = useRef(null);
+  const customerRef = useRef(null);
+  const gradeRef = useRef(null);
+  const qtyRef = useRef(null);
+  const truckRef = useRef(null);
+  const startRef = useRef(null);
+  const stopRef = useRef(null);
+
+  const fieldRefs = {
+    docketNo:     docketRef,
+    customerName: customerRef,
+    grade:        gradeRef,
+    qty:          qtyRef,
+    truckNumber:  truckRef,
+    batchStart:   startRef,
+    batchStop:    stopRef,
+  };
+
+  const editableOrder = [
+    "docketNo", "customerName", "grade", "qty", "truckNumber", "batchStart", "batchStop"
+  ];
+
+  const handleEnterKey = (e, currentKey) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const currentIndex = editableOrder.indexOf(currentKey);
+      const nextKey = editableOrder[currentIndex + 1];
+      if (nextKey && fieldRefs[nextKey].current) {
+        fieldRefs[nextKey].current.focus();
+      }
+    }
+  };
+
   return (
-    <motion.div
-      variants={containerVariants}
-      initial="hidden"
-      animate="show"
-      className="grid gap-4 grid-cols-1 md:grid-cols-3"
-    >
-      {FIELDS.map(({ label, key, type }) => {
+    <div className="grid gap-5 grid-cols-1 md:grid-cols-3">
+      {FIELDS.map(({ label, key, type, editable }) => {
         const value = entry[key];
         let isValid = value !== "" && value !== undefined && value !== null;
         
@@ -66,29 +86,35 @@ export function BatchEntryForm({
 
         if (key === "grade") {
           return (
-            <motion.div key={key} variants={fieldVariants}>
+            <div key={key}>
               <Select
+                ref={gradeRef}
                 id={`entry-${key}`}
                 label={label}
-                options={grades}
-                value={value}
-                onChange={(e) => onUpdateField(key, e.target.value)}
+                options={["SELECT GRADE", ...grades]}
+                value={value || "SELECT GRADE"}
+                onChange={(e) => {
+                  const val = e.target.value === "SELECT GRADE" ? "" : e.target.value;
+                  onUpdateField(key, val);
+                }}
+                onKeyDown={(e) => handleEnterKey(e, "grade")}
                 valid={isValid}
               />
-            </motion.div>
+            </div>
           );
         }
 
         if (key === "customerName") {
           return (
-            <motion.div key={key} variants={fieldVariants}>
-              <Select
+            <div key={key}>
+              <Combobox
+                ref={customerRef}
                 id={`entry-${key}`}
                 label={label}
-                options={["SELECT CUSTOMER", ...customers.map(c => c.name)]}
-                value={value || "SELECT CUSTOMER"}
-                onChange={(e) => {
-                  const val = e.target.value === "SELECT CUSTOMER" ? "" : e.target.value;
+                options={customers.map(c => c.name)}
+                value={value || ""}
+                placeholder="TYPE CUSTOMER..."
+                onChange={(val) => {
                   onUpdateField("customerName", val);
                   // Auto-fill site if match found
                   const found = customers.find(c => c.name === val);
@@ -98,22 +124,24 @@ export function BatchEntryForm({
                     onUpdateField("site", "");
                   }
                 }}
+                onKeyDown={(e) => handleEnterKey(e, "customerName")}
                 valid={isValid}
               />
-            </motion.div>
+            </div>
           );
         }
 
         if (key === "truckNumber") {
           return (
-            <motion.div key={key} variants={fieldVariants}>
-              <Select
+            <div key={key}>
+              <Combobox
+                ref={truckRef}
                 id={`entry-${key}`}
                 label={label}
-                options={["SELECT TRUCK", ...vehicles.map(v => v.truckNumber)]}
-                value={value || "SELECT TRUCK"}
-                onChange={(e) => {
-                  const val = e.target.value === "SELECT TRUCK" ? "" : e.target.value;
+                options={vehicles.map(v => v.truckNumber)}
+                value={value || ""}
+                placeholder="TYPE TRUCK..."
+                onChange={(val) => {
                   onUpdateField("truckNumber", val);
                   // Auto-fill driver if match found
                   const found = vehicles.find(v => v.truckNumber === val);
@@ -123,32 +151,32 @@ export function BatchEntryForm({
                     onUpdateField("truckDriver", "");
                   }
                 }}
+                onKeyDown={(e) => handleEnterKey(e, "truckNumber")}
                 valid={isValid}
               />
-            </motion.div>
+            </div>
           );
         }
 
         return (
-          <motion.div key={key} variants={fieldVariants}>
+          <div key={key}>
             <Input
+              ref={fieldRefs[key]}
               id={`entry-${key}`}
               label={label}
               type={type}
               inputMode={type === "number" ? "decimal" : "text"}
               min={key === "qty" ? 0 : undefined}
               max={key === "qty" ? 100 : undefined}
-              readOnly={key === "site" || key === "truckDriver"}
-              className={(key === "site" || key === "truckDriver") ? "bg-stone-100 opacity-80 cursor-not-allowed" : ""}
+              readOnly={!editable}
+              className={!editable ? "bg-stone-50 opacity-80 cursor-not-allowed" : ""}
               value={value}
               onChange={(e) => {
                 let val = e.target.value;
-                if (key === "qty") {
-                  // Prevent entering numbers > 100 to avoid freezing
-                  if (Number(val) > 100) return;
-                }
+                if (key === "qty" && Number(val) > 100) val = "100";
                 onUpdateField(key, val);
               }}
+              onKeyDown={(e) => editable && handleEnterKey(e, key)}
               valid={isValid}
             />
             {key === "qty" && Number(value) > 100 && (
@@ -156,35 +184,36 @@ export function BatchEntryForm({
                 ⚠️ Max limit 100m³ to prevent freeze
               </p>
             )}
-          </motion.div>
+          </div>
         );
       })}
 
       {/* Batch timing matching Row 3 */}
-      <motion.div variants={fieldVariants}>
+      <div>
         <Input 
+          ref={startRef}
           id="entry-batchStart"
           label="START TIME" 
           placeholder="Auto"
           value={entry.batchStart} 
           onChange={(e) => onUpdateField("batchStart", e.target.value)}
+          onKeyDown={(e) => handleEnterKey(e, "batchStart")}
         />
-      </motion.div>
-      <motion.div variants={fieldVariants}>
+      </div>
+      <div>
         <Input 
+          ref={stopRef}
           id="entry-batchStop"
           label="STOP TIME" 
           placeholder="Auto"
           value={entry.batchStop} 
           onChange={(e) => onUpdateField("batchStop", e.target.value)}
+          onKeyDown={(e) => handleEnterKey(e, "batchStop")}
         />
-      </motion.div>
+      </div>
 
-      {/* Start / Stop buttons spanning full width */}
-      <motion.div
-        variants={fieldVariants}
-        className="col-span-full flex gap-3 pt-3"
-      >
+      {/* Action buttons spanning full width */}
+      <div className="col-span-full flex gap-3 pt-3">
         <Button
           variant="primary"
           size="lg"
@@ -203,13 +232,9 @@ export function BatchEntryForm({
         >
           STOP BATCH
         </Button>
-      </motion.div>
+      </div>
 
-      {/* Action buttons spanning full width below Start/Stop */}
-      <motion.div
-        variants={fieldVariants}
-        className="col-span-full pt-2 flex flex-col gap-2"
-      >
+      <div className="col-span-full pt-2 flex flex-col gap-2">
         <Button
           variant="primary"
           size="lg"
@@ -218,11 +243,10 @@ export function BatchEntryForm({
         >
           LAST REPORT
         </Button>
-        {/* Tip: browser adds headers/footers — user must uncheck them */}
         <p className="text-center text-[11px] text-muted/70 leading-tight">
           💡 In the print dialog, uncheck <span className="font-semibold text-muted">"Headers and footers"</span> to remove the date, URL &amp; page number.
         </p>
-      </motion.div>
-    </motion.div>
+      </div>
+    </div>
   );
 }

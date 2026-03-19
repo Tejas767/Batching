@@ -61,19 +61,17 @@ export function MixDesignEditor({
       <p className={`mb-5 text-xs font-semibold transition-opacity duration-300 ${syncMessage ? "text-brand-1 opacity-100" : "opacity-0 select-none"}`}>
         {syncMessage || "‎"}
       </p>
-      <div className="overflow-x-auto">
-        <table className="min-w-full border-separate border-spacing-0 text-sm">
+      <div className="overflow-x-visible">
+        <table className="min-w-full border-separate border-spacing-0 text-xs">
           <thead>
             <tr className="bg-brand-1 text-white">
-              <th className="rounded-tl-xl px-4 py-3 text-left text-xs font-semibold uppercase tracking-widest">
+              <th className="rounded-tl-xl px-2 py-3 text-left font-bold uppercase tracking-tight text-[12px] w-14">
                 Grade
               </th>
               {mixColumns.map((col, i) => (
                 <th
                   key={col.key}
-                  className={`py-3 text-xs font-semibold uppercase tracking-widest ${
-                    col.label === "-" ? "text-center px-2" : "text-left px-4"
-                  } ${
+                  className={`py-3 text-[12px] font-bold uppercase tracking-normal text-center px-1.5 border-l border-white/10 ${
                     i === mixColumns.length - 1 ? "rounded-tr-xl" : ""
                   }`}
                 >
@@ -86,13 +84,13 @@ export function MixDesignEditor({
             {/* Mix design rows per grade */}
             {grades.map((grade, rowIdx) => (
               <tr key={grade} className={rowIdx % 2 === 0 ? "bg-white" : "bg-surface"}>
-                <td className="border-b border-border px-4 py-2.5 font-semibold text-brand-1">
+                <td className="border-b border-border px-2 py-2 text-base font-bold text-brand-1">
                   {grade}
                 </td>
                 {mixColumns.map((col) => (
                   <td
                     key={`${grade}-${col.key}`}
-                    className="border-b border-border px-3 py-2 text-center"
+                    className="border-b border-border px-1.5 py-1.5 text-center"
                   >
                     <input
                       id={`mix-${grade}-${col.key}`}
@@ -101,7 +99,7 @@ export function MixDesignEditor({
                       inputMode="decimal"
                       value={mixDesign[grade]?.[col.key] ?? ""}
                       onChange={(e) => onUpdateCell(grade, col.key, e.target.value)}
-                      className="w-[72px] rounded-lg border border-border bg-white px-2 py-1.5 text-sm focus:border-brand-1 focus:outline-none focus:ring-1 focus:ring-brand-1/30 transition-colors"
+                      className="w-16 rounded-lg border border-border bg-white px-1.5 py-1.5 text-sm font-medium text-center focus:border-brand-1 focus:outline-none focus:ring-1 focus:ring-brand-1/30 transition-colors"
                     />
                   </td>
                 ))}
@@ -110,21 +108,21 @@ export function MixDesignEditor({
 
             {/* ── DIFFERENCE ROW ── */}
             <tr className="bg-stone-100 border-t-2 border-brand-1/30">
-              <td className="px-4 py-3 text-xs font-bold uppercase tracking-widest text-stone-600 whitespace-nowrap">
-                Difference (±)
+              <td className="px-2 py-3 text-[13px] font-black uppercase tracking-tight text-stone-600 whitespace-nowrap">
+                DIFF (±)
               </td>
               {mixColumns.map((col) => (
-                <td key={`diff-${col.key}`} className="px-3 py-2 text-center">
+                <td key={`diff-${col.key}`} className="px-1.5 py-1.5 text-center">
                   <input
                     id={`diff-${col.key}`}
                     name={`diff-${col.key}`}
                     type="number"
-                    step="0.1"
+                    step="1"
                     min="0"
                     inputMode="decimal"
                     value={differences?.[col.key] ?? ""}
                     onChange={(e) => onUpdateDifference(col.key, e.target.value)}
-                    className="w-[72px] rounded-lg border border-amber-300 bg-amber-50 px-2 py-1.5 text-sm font-semibold text-amber-800 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-400/30 transition-colors"
+                    className="w-16 rounded-lg border border-amber-300 bg-amber-50 px-1.5 py-1.5 text-sm font-medium text-center text-amber-800 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-400/30 transition-colors"
                     placeholder="0"
                   />
                 </td>
@@ -132,9 +130,6 @@ export function MixDesignEditor({
             </tr>
           </tbody>
         </table>
-        <p className="mt-3 text-xs text-muted">
-          💡 <strong>Difference (±)</strong> — Sets the maximum allowed variance per batch between <em>Total Set Weight</em> and <em>Total Actual</em> for each material.
-        </p>
       </div>
     </Card>
   );

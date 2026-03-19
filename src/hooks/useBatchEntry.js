@@ -9,13 +9,14 @@ const defaultEntry = {
   docketNo: "",
   customerName: "",
   site: "",
-  grade: "M15",
+  grade: "",
   qty: "",
   truckDriver: "",
   truckNumber: "",
   batchStart: "",
   batchStop: "",
   plantSN: "",
+  companyName: "",
 };
 
 export function useBatchEntry(user = null) {
@@ -113,7 +114,8 @@ export function useBatchEntry(user = null) {
         ...defaultEntry,
         docketNo: nextDocket,
         plantSN: prev.plantSN,
-        grade: "M15"
+        companyName: prev.companyName,
+        grade: ""
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(fresh));
       return fresh;

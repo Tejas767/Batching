@@ -58,8 +58,7 @@ export async function POST(request, { params }) {
     return Response.json({
       data: {
         username:     user.username,
-        expiresAt:    user.expiresAt,
-        daysRemaining,
+        expiresAt:    user.expiresAt, daysRemaining,
         isActive:     user.isActive,
       },
     });

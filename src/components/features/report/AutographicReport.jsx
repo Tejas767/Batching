@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Printer, Save } from "lucide-react";
+import { toast } from "sonner";
 import { reportColumns, groupOrder } from "@/constants/mixConfig";
 
 const LOGO_SRC = "/report_logo.jpg";
@@ -20,15 +21,13 @@ const getActualDisplay = (colKey, val) => {
   return val || 0;
 };
 
-// ── CLASSIC LAYOUT (Used for Printing) ──────────────────────────────────────
+// ── CLASSIC LAYOUT (The actual document design) ─────────────────────────────
 
 function ClassicReportLayout({ entry, targets, reportData, batchSize = 0.5 }) {
   const productionQty = Number(entry.qty || 0);
   const today = new Date().toLocaleDateString("en-GB", {
     day: "2-digit", month: "short", year: "numeric"
   }).replace(/ /g, "-");
-
-  const bSize = Number(batchSize || 0.5).toFixed(2);
 
   return (
     <div className="bg-white text-black print:block print:m-0 print:p-0">
@@ -46,7 +45,7 @@ function ClassicReportLayout({ entry, targets, reportData, batchSize = 0.5 }) {
             width: 210mm;
             min-height: 297mm;
             margin: 0 auto;
-            padding: 12mm 2mm 5mm 6mm;
+            padding: 8mm 6mm 5mm 6mm;
             box-sizing: border-box;
             background: white;
             color: black;
@@ -57,13 +56,15 @@ function ClassicReportLayout({ entry, targets, reportData, batchSize = 0.5 }) {
           width: 210mm;
           min-height: 297mm;
           margin: 0 auto;
-          padding: 10mm 2mm 5mm 6mm;
+          padding: 8mm 6mm 5mm 6mm;
           font-family: "Times New Roman", Times, serif;
           font-size: 9pt;
           line-height: 1.2;
           letter-spacing: 0px;
           box-sizing: border-box;
           color: black;
+          background: white;
+          text-align: left;
         }
 
         .rep-header-main {
@@ -133,7 +134,7 @@ function ClassicReportLayout({ entry, targets, reportData, batchSize = 0.5 }) {
         }
 
         .rep-meta-left {
-          width: 133mm;
+          width: 121mm;
           flex-shrink: 0;
         }
 
@@ -176,14 +177,13 @@ function ClassicReportLayout({ entry, targets, reportData, batchSize = 0.5 }) {
 
         .top-meta-v {
           font-weight: normal;
-          transform: translateX(0mm);
           display: inline-block;
           white-space: nowrap;
           font-family: "Times New Roman", Times, serif;
         }
 
         .meta-k {
-          width: 52mm;
+          width: 50mm;
           font-weight: bold;
           white-space: nowrap;
           font-family: "Times New Roman", Times, serif;
@@ -198,7 +198,7 @@ function ClassicReportLayout({ entry, targets, reportData, batchSize = 0.5 }) {
         .meta-v {
           font-weight: normal;
           text-transform: uppercase;
-          transform: translateX(4.5mm);
+          padding-left: 4.5mm;
           display: inline-block;
           white-space: nowrap;
           font-family: "Times New Roman", Times, serif;
@@ -222,16 +222,12 @@ function ClassicReportLayout({ entry, targets, reportData, batchSize = 0.5 }) {
         }
 
         .right-kv {
-          width: auto;
-        }
-
-        .right-kv {
           table-layout: fixed;
-          width: 80mm;
+          width: 75mm;
         }
 
         .qty-k {
-          width: 43mm;
+          width: 40mm;
           font-weight: bold;
           white-space: nowrap;
           text-align: left;
@@ -253,9 +249,10 @@ function ClassicReportLayout({ entry, targets, reportData, batchSize = 0.5 }) {
         }
 
         .qty-u {
-          width: 18mm;
-          text-align: left;
+          width: 14mm;
+          text-align: right;
           white-space: nowrap;
+          font-family: "Times New Roman", Times, serif;
         }
 
         .rep-data-table {
@@ -371,7 +368,7 @@ function ClassicReportLayout({ entry, targets, reportData, batchSize = 0.5 }) {
 
       <div className="a4-print-container">
         {/* Header Section */}
-        <div className="rep-header-main">SUPERTECH RMC CHARHOLI</div>
+        <div className="rep-header-main">{entry.companyName || ""}</div>
 
         <div className="rep-logo-area">
           <div className="rep-logo-col">
@@ -408,7 +405,7 @@ function ClassicReportLayout({ entry, targets, reportData, batchSize = 0.5 }) {
                 <tr><td className="meta-k">Truck Number</td><td className="meta-s">:</td><td className="meta-v">{entry.truckNumber || "—"}</td></tr>
                 <tr><td className="meta-k">Truck Driver</td><td className="meta-s">:</td><td className="meta-v">{entry.truckDriver || "—"}</td></tr>
                 <tr><td className="meta-k">Order Number</td><td className="meta-s">:</td><td className="meta-v">-</td></tr>
-                <tr><td className="meta-k">Batcher Name</td><td className="meta-s">:</td><td className="meta-v">Stetter</td></tr>
+                <tr><td className="meta-k">Batcher Name</td><td className="meta-s">:</td><td className="meta-v">STETTER</td></tr>
               </tbody>
             </table>
           </div>
@@ -436,7 +433,7 @@ function ClassicReportLayout({ entry, targets, reportData, batchSize = 0.5 }) {
                 <tr>
                   <td className="qty-k">Production Quantity</td>
                   <td className="qty-s">:</td>
-                  <td className="qty-v">{(productionQty || 0).toFixed(2)}</td>
+                  <td className="qty-v">{(Number(entry.qty) || 0).toFixed(2)}</td>
                   <td className="qty-u">M³</td>
                 </tr>
                 <tr>
@@ -448,19 +445,19 @@ function ClassicReportLayout({ entry, targets, reportData, batchSize = 0.5 }) {
                 <tr>
                   <td className="qty-k">With This Load</td>
                   <td className="qty-s">:</td>
-                  <td className="qty-v">{(productionQty || 0).toFixed(2)}</td>
+                  <td className="qty-v">{(Number(entry.qty) || 0).toFixed(2)}</td>
                   <td className="qty-u">M³</td>
                 </tr>
                 <tr>
                   <td className="qty-k">Mixer Capacity</td>
                   <td className="qty-s">:</td>
-                  <td className="qty-v">{batchSize.toFixed(2)}</td>
+                  <td className="qty-v">{Number(batchSize || 0.5).toFixed(2)}</td>
                   <td className="qty-u">M³</td>
                 </tr>
                 <tr>
                   <td className="qty-k">Batch Size</td>
                   <td className="qty-s">:</td>
-                  <td className="qty-v">{batchSize.toFixed(2)}</td>
+                  <td className="qty-v">{Number(batchSize || 0.5).toFixed(2)}</td>
                   <td className="qty-u">M³</td>
                 </tr>
               </tbody>
@@ -491,13 +488,8 @@ function ClassicReportLayout({ entry, targets, reportData, batchSize = 0.5 }) {
             <tr className="col-tr col-row-shift">
               {reportColumns.map((col, i) => {
                 let cellContent = col.label;
-                let subContent = null;
-
-                if (col.key === "pm") {
-                  cellContent = ""; // Empty header for the +/- column to match physical report
-                } else if (col.key === "water") {
-                  cellContent = "WATE"; // Use the label consistently
-                }
+                if (col.key === "pm") cellContent = "";
+                else if (col.key === "water") cellContent = "WATE";
 
                 return (
                   <th
@@ -513,20 +505,17 @@ function ClassicReportLayout({ entry, targets, reportData, batchSize = 0.5 }) {
           <tbody>
             <tr><td colSpan={reportColumns.length} className="label-cell">Targets based on batchsize in</td></tr>
             <tr className="targets-row border-bottom-thin">
-              {reportColumns.map((col, i) => {
-                const val = getTargetDisplay(col.key, targets);
-                return (
-                  <td
-                    key={col.key}
-                    className={`${i === 0 ? "rep-left-align target-kg-shift" : ""} ${col.key === "pm" ? "pm-col-shift" : ""} ${col.key === "moi" ? "moi-col-shift" : ""} ${col.key === "mm10" ? "mm10-col-shift" : ""}`}
-                  >
-                    {i === 0 && <span style={{ marginRight: "-1.5mm", fontFamily: '"Times New Roman", Times, serif', fontWeight: 'normal' }}>Kgs.</span>}
-                    {col.key === "moi" && <span style={{ fontSize: '8.5pt', marginRight: '1mm', fontFamily: '"Times New Roman", Times, serif', fontWeight: 'normal' }}>in %</span>}
-                    {col.key === "pm" && <span style={{ fontSize: '8.5pt', marginRight: '1mm', fontFamily: '"Times New Roman", Times, serif', fontWeight: 'normal' }}>+/-</span>}
-                    {val}
-                  </td>
-                );
-              })}
+              {reportColumns.map((col, i) => (
+                <td
+                  key={col.key}
+                  className={`${i === 0 ? "rep-left-align target-kg-shift" : ""} ${col.key === "pm" ? "pm-col-shift" : ""} ${col.key === "moi" ? "moi-col-shift" : ""} ${col.key === "mm10" ? "mm10-col-shift" : ""}`}
+                >
+                  {i === 0 && <span style={{ marginRight: "-1.5mm", fontWeight: 'normal' }}>Kgs.</span>}
+                  {col.key === "moi" && <span style={{ marginRight: '1mm', fontWeight: 'normal' }}>in %</span>}
+                  {col.key === "pm" && <span style={{ marginRight: '1mm', fontWeight: 'normal' }}>+/-</span>}
+                  {getTargetDisplay(col.key, targets)}
+                </td>
+              ))}
             </tr>
 
             <tr><td colSpan={reportColumns.length} className="label-cell">Actual in Kgs.</td></tr>
@@ -548,8 +537,7 @@ function ClassicReportLayout({ entry, targets, reportData, batchSize = 0.5 }) {
               {reportColumns.map((col, i) => {
                 const isPlaceholder = col.key === "moi" || col.key === "pm";
                 const sw = isPlaceholder ? null : (reportData.setWeights?.[col.key] ?? ((Number(targets[col.key]) || 0) * (reportData.totalBatches || 0)));
-                const display = isPlaceholder ? null : ((col.key === "admix1" || col.key === "admix2") ? Number(sw).toFixed(2) : Math.round(sw));
-
+                const display = isPlaceholder ? null : ((col.key.includes("admix")) ? Number(sw).toFixed(2) : Math.round(sw));
                 return (
                   <td
                     key={col.key}
@@ -569,7 +557,6 @@ function ClassicReportLayout({ entry, targets, reportData, batchSize = 0.5 }) {
                 const isPlaceholder = col.key === "moi" || col.key === "pm";
                 const val = isPlaceholder ? null : (reportData.totals[col.key] || 0);
                 const act = isPlaceholder ? null : (col.key.includes("admix") ? Number(val).toFixed(2) : Math.round(val));
-
                 return (
                   <td
                     key={col.key}
@@ -582,13 +569,12 @@ function ClassicReportLayout({ entry, targets, reportData, batchSize = 0.5 }) {
             </tr>
           </tbody>
         </table>
-
       </div>
     </div>
   );
 }
 
-// ── MODERN SCREEN UI (REPORT TAB) ───────────────────────────────────────────
+// ── SCREEN UI (REPORT TAB) ──────────────────────────────────────────────────
 
 export function AutographicReport({
   entry,
@@ -600,170 +586,68 @@ export function AutographicReport({
   hideActions = false,
   onUpdateField
 }) {
-  const productionQty = Number(entry.qty || 0);
-  const today = new Date().toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric"
-  }).replace(/ /g, "-");
-
-  const bSize = Number(batchSize || 0.5).toFixed(2);
-
   return (
-    <>
+    <div className="flex flex-col gap-6 pb-20">
       <div className="print:hidden">
-        <Card>
-          <div className="mb-6 flex flex-wrap items-start justify-between gap-6">
+        {/* Modern Sticky Header for Actions */}
+        <div className="sticky top-0 z-30 mb-8 flex flex-wrap items-center justify-between gap-6 rounded-2xl border border-border bg-white/80 p-4 shadow-sm backdrop-blur-md">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-6">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-widest text-muted">
-                SUPERTECH RMC CHARHOLI
-              </p>
-              <h2 className="mt-1 text-2xl font-semibold text-brand-1">
-                Autographic Record
-              </h2>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted mb-1">Company Name</p>
+              {onUpdateField ? (
+                <input
+                  type="text"
+                  className="text-base font-extrabold tracking-widest text-brand-1 bg-transparent border-b border-border focus:outline-none focus:border-brand-1/40 p-0 w-full min-w-[280px] uppercase"
+                  value={entry.companyName ?? ""}
+                  placeholder="ENTER COMPANY NAME..."
+                  onChange={(e) => onUpdateField("companyName", e.target.value)}
+                />
+              ) : (
+                <p className="text-base font-extrabold tracking-widest text-brand-1 uppercase">
+                  {entry.companyName || "(No Company Name)"}
+                </p>
+              )}
             </div>
-            {!hideActions && (
-              <div className="flex items-center gap-3">
-                <div className="rounded-2xl border border-border bg-surface px-5 py-2 text-sm hidden sm:block">
-                  <p className="text-[10px] uppercase tracking-widest text-muted">Plant S/N</p>
-                  {onUpdateField ? (
-                    <div className="flex items-center gap-1">
-                      <input
-                        type="text"
-                        className="bg-transparent font-semibold border-none focus:outline-none focus:ring-1 focus:ring-brand-1/20 w-24 text-lg p-0"
-                        value={entry.plantSN ?? ""}
-                        onChange={(e) => onUpdateField("plantSN", e.target.value)}
-                      />
-                    </div>
-                  ) : (
-                    <p className="mt-0.5 text-lg font-semibold text-foreground">{entry.plantSN || "—"}</p>
-                  )}
-                </div>
-                {onSaveToHistory && (
-                  <Button variant="secondary" size="md" onClick={onSaveToHistory} icon={<Save size={14} />}>
-                    Save
-                  </Button>
-                )}
-                <Button variant="primary" size="md" onClick={onPrint} icon={<Printer size={14} />}>
-                  Print
-                </Button>
-              </div>
-            )}
-          </div>
 
-          <div className="mb-8 grid gap-8 md:grid-cols-2">
-            <div className="space-y-2 text-sm text-stone-700">
-              {[
-                ["Batch Date", today],
-                ["Batch Start Time", entry.batchStart || "—"],
-                ["Batch End Time", entry.batchStop || "—"],
-                ["Batch Number / Docket No", entry.docketNo],
-                ["Customer", entry.customerName],
-                ["Site", entry.site],
-                ["Recipe Code", entry.grade],
-                ["Truck Number", entry.truckNumber],
-                ["Truck Driver", entry.truckDriver],
-              ].map(([label, value]) => (
-                <div key={label} className="flex justify-between border-b border-border/50 pb-1 last:border-0">
-                  <span className="text-muted">{label}</span>
-                  <span className="font-semibold">{value || "—"}</span>
-                </div>
-              ))}
-            </div>
-            <div className="space-y-2 text-sm text-stone-700">
-              {[
-                ["Ordered Quantity", "0.00 m³"],
-                ["Production Quantity", `${(productionQty || 0).toFixed(2)} m³`],
-                ["Adj/Manual Quantity", "0.00 m³"],
-                ["With This Load", `${(productionQty || 0).toFixed(2)} m³`],
-                ["Mixer Capacity", `${bSize} m³`],
-                ["Batch Size", `${bSize} m³`],
-              ].map(([label, value]) => (
-                <div key={label} className="flex justify-between border-b border-border/50 pb-1 last:border-0">
-                  <span className="text-muted">{label}</span>
-                  <span className="font-semibold">{value}</span>
-                </div>
-              ))}
+            <div className="h-10 w-px bg-border hidden sm:block" />
+
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted mb-1">Plant S/N</p>
+              {onUpdateField ? (
+                <input
+                  type="text"
+                  className="bg-transparent font-extrabold border-b border-border focus:outline-none focus:border-brand-1/40 w-24 text-base p-0 text-brand-1 uppercase"
+                  value={entry.plantSN ?? ""}
+                  onChange={(e) => onUpdateField("plantSN", e.target.value)}
+                />
+              ) : (
+                <p className="text-base font-extrabold text-brand-1 uppercase">{entry.plantSN || "—"}</p>
+              )}
             </div>
           </div>
 
-          {/* Records Table Preview */}
-          <div className="overflow-x-auto rounded-2xl border border-border">
-            <table className="min-w-full border-separate border-spacing-0 text-xs">
-              <thead>
-                <tr className="bg-surface text-stone-600">
-                  <th className="px-3 py-2 text-left"> </th>
-                  {groupOrder.map((group) => {
-                    const span = reportColumns.filter((c) => c.group === group).length;
-                    return (
-                      <th key={group} colSpan={span} className="px-3 py-2 text-xs font-semibold uppercase tracking-widest text-center border-l border-border first:border-l-0">
-                        {group}
-                      </th>
-                    );
-                  })}
-                </tr>
-                <tr className="bg-brand-1 text-white text-center">
-                  <th className="px-3 py-2 text-left text-[11px] uppercase tracking-widest">Batch</th>
-                  {reportColumns.map((col) => (
-                    <th key={col.key} className="px-3 py-2 text-[11px] uppercase tracking-widest text-center">
-                      {col.label}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                <tr className="bg-white text-center">
-                  <td className="border-b border-border px-3 py-2 font-semibold text-stone-700 text-left">Targets</td>
-                  {reportColumns.map((col) => (
-                    <td key={col.key} className="border-b border-border px-3 py-2">
-                      {getTargetDisplay(col.key, targets)}
-                    </td>
-                  ))}
-                </tr>
-                {reportData.rows.map((row) => (
-                  <tr key={row.id} className={`text-center ${row.id % 2 === 0 ? "bg-white" : "bg-stone-50/50"}`}>
-                    <td className="border-b border-border px-3 py-2 font-semibold text-brand-1 text-left">{row.id}</td>
-                    {reportColumns.map((col) => (
-                      <td key={col.key} className="border-b border-border px-3 py-2">
-                        {getActualDisplay(col.key, row[col.key])}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-              <tfoot className="text-center font-bold">
-                <tr className="bg-surface text-stone-800">
-                  <td className="px-3 py-3 text-left">Total Set Weight</td>
-                  {reportColumns.map((col) => {
-                    if (col.key === "moi" || col.key === "pm") return <td key={col.key}></td>;
-                    // Use stored setWeights if available, otherwise fall back to target × batches
-                    const sw = reportData.setWeights?.[col.key]
-                      ?? ((Number(targets[col.key]) || 0) * (reportData.totalBatches || 0));
-                    const display = (col.key === "admix1" || col.key === "admix2")
-                      ? Number(sw).toFixed(2)
-                      : Math.round(sw);
-                    return <td key={col.key} className="px-3 py-3">{display === 0 ? "0" : display}</td>;
-                  })}
-                </tr>
-                <tr className="bg-white text-brand-1">
-                  <td className="px-3 py-3 text-left border-t border-border">Total Actual</td>
-                  {reportColumns.map((col) => {
-                    if (col.key === "moi" || col.key === "pm") return <td key={col.key} className="px-3 py-3 border-t border-border"></td>;
-                    const val = reportData.totals[col.key] || 0;
-                    const act = col.key.includes("admix1") || col.key.includes("admix2") ? Number(val).toFixed(2) : Math.round(val);
-                    return (
-                      <td key={col.key} className="px-3 py-3 border-t border-border">
-                        {act}
-                      </td>
-                    );
-                  })}
-                </tr>
-              </tfoot>
-            </table>
+          {!hideActions && (
+            <div className="flex items-center gap-3">
+              <Button variant="primary" size="md" onClick={onPrint} icon={<Printer size={14} />} className="rounded-xl bg-brand-1 hover:bg-brand-1/90 shadow-lg shadow-brand-1/20 transition-all active:scale-95">
+                Print Report
+              </Button>
+            </div>
+          )}
+        </div>
+
+        {/* The Digital Twin Preview */}
+        <div className="flex justify-center overflow-x-auto p-4 md:p-10 bg-stone-100/50 rounded-3xl border border-dashed border-stone-200">
+          <div className="bg-white shadow-[0_20px_50px_rgba(0,0,0,0.1)] ring-1 ring-stone-900/5 rounded-sm origin-top scale-90 sm:scale-100">
+             <ClassicReportLayout 
+               entry={entry} 
+               targets={targets} 
+               reportData={reportData} 
+               batchSize={batchSize} 
+             />
           </div>
-        </Card>
+        </div>
       </div>
-    </>
+    </div>
   );
 }
 
@@ -775,4 +659,3 @@ export function HiddenPrintReport({ entry, targets, reportData, batchSize }) {
     </div>
   );
 }
-

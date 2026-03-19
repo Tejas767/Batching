@@ -22,13 +22,13 @@ export const initialMixDesign = grades.reduce((acc, grade) => {
 // Columns shown in the editable MIX DESIGN tab
 export const mixColumns = [
   { key: "mm10",   label: "10 M" },
-  { key: "cSan",   label: "C SAN" },
-  { key: "cSand",  label: "C SAND" },
+  { key: "cSan",   label: "SAN" },
+  { key: "cSand",  label: "SAND" },
   { key: "mm20",   label: "20 MM" },
   { key: "cem1",   label: "CEM1" },
   { key: "ggbs",   label: "GGBS" },
-  { key: "flyAsh", label: "FLY ASH" },
-  { key: "watIce", label: "WAT/ICE" },
+  { key: "flyAsh", label: "ASH" },
+  { key: "watIce", label: "ICE" },
   { key: "water",  label: "WATER" },
   { key: "silica", label: "Silica" },
   { key: "admix1", label: "ADM1" },

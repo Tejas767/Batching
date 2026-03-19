@@ -22,13 +22,13 @@ export function MixDesignTable({ mixDesign }) {
         <table className="min-w-full border-separate border-spacing-0 text-sm">
           <thead>
             <tr className="bg-brand-1 text-white">
-              <th className="rounded-tl-xl px-4 py-3 text-left text-xs font-semibold uppercase tracking-widest">
+              <th className="rounded-tl-xl px-4 py-3 text-left text-base font-semibold uppercase tracking-widest">
                 Grade
               </th>
               {mixColumns.map((col, i) => (
                 <th
                   key={col.key}
-                  className={`py-3 text-xs font-semibold uppercase tracking-widest ${
+                  className={`py-3 text-base font-semibold uppercase tracking-widest ${
                     col.label === "-" ? "text-center px-2" : "text-left px-4"
                   } ${i === mixColumns.length - 1 ? "rounded-tr-xl" : ""}`}
                 >
