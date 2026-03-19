@@ -56,7 +56,10 @@ const tabVariants = {
    Home — the page orchestrator
 ════════════════════════════════════════════════ */
 export default function Home() {
-  const { user, isLoaded, isSignedIn, signOut } = useSession({ redirectTo: "/login" });
+  const { user, isLoaded, isSignedIn, signOut } = useSession({ 
+    redirectTo: "/login",
+    requireRole: "operator"
+  });
   const [activeTab, setActiveTab] = useState("ENTRY");
   const [deleteId, setDeleteId] = useState(null);
   const [showClearAll, setShowClearAll] = useState(false);
@@ -118,23 +121,7 @@ export default function Home() {
   };
 
   const handlePrint = () => {
-    // 1. If we are on ENTRY tab, we specifically want the LAST COMPLETED batch
-    // If lastBatch is null (session refresh), try to use the most recent history record
-    let dataToPrint = lastBatch;
-    if (!dataToPrint && filteredHistory && filteredHistory.length > 0) {
-      dataToPrint = filteredHistory[0];
-      setLastBatch(dataToPrint); // Sync state so print layout updates
-    }
-
-    // 2. If STILL null and we are on ENTRY tab, there's nothing to print
-    if (!dataToPrint && (activeTab === "ENTRY" || activeTab === "REPORT")) {
-      if (!dataToPrint) {
-        toast.error("No recent batch records found.");
-        return;
-      }
-    }
-
-    // 3. Print the hidden layout (which now uses dataToPrint)
+    // Print whatever is currently displayed on screen (live entry data)
     if (typeof window !== "undefined") {
       setTimeout(() => {
         window.print();
@@ -295,10 +282,10 @@ export default function Home() {
           {activeTab === "REPORT" && (
             <div className="md:mx-auto md:max-w-5xl">
               <AutographicReport
-                entry={lastBatch || entry}
-                targets={lastBatch?.mixDesign || targets}
-                reportData={lastBatch || reportData}
-                batchSize={lastBatch?.batchSize || batchSize}
+                entry={entry}
+                targets={targets}
+                reportData={reportData}
+                batchSize={batchSize}
                 onPrint={handlePrint}
                 onSaveToHistory={handleSaveToHistory}
                 onUpdateField={handleUpdateField}
@@ -408,10 +395,10 @@ export default function Home() {
       />
       {/* Always-mounted hidden print DOM — captured by window.print() regardless of active tab */}
       <HiddenPrintReport
-        entry={lastBatch || entry}
-        targets={lastBatch?.mixDesign || targets}
-        reportData={lastBatch || reportData}
-        batchSize={lastBatch?.batchSize || batchSize}
+        entry={entry}
+        targets={targets}
+        reportData={reportData}
+        batchSize={batchSize}
       />
     </PageShell>
   );

@@ -64,6 +64,10 @@ const UserSchema = new Schema(
       type: String,
       default: "", // Empty means use system default
     },
+    companyName: {
+      type: String,
+      default: "", // Each user's own company name
+    },
 
     // ── Audit ────────────────────────────────────
     createdBy: {

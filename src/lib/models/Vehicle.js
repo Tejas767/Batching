@@ -26,4 +26,7 @@ const VehicleSchema = new Schema(
   }
 );
 
+// Compound index: fast "get my vehicles sorted by newest" queries
+VehicleSchema.index({ userId: 1, createdAt: -1 });
+
 export default models.Vehicle || model("Vehicle", VehicleSchema);

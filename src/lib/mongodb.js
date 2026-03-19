@@ -27,6 +27,10 @@ export async function connectDB() {
     cached.promise = mongoose.connect(MONGODB_URI, {
       bufferCommands: false,
       dbName: "batching_system",
+      maxPoolSize: 10,               // Max 10 connections per serverless instance
+      minPoolSize: 2,                // Keep 2 warm connections ready
+      serverSelectionTimeoutMS: 5000, // Fail fast if DB unreachable (5s)
+      socketTimeoutMS: 45000,         // Close idle sockets after 45s
     });
   }
 

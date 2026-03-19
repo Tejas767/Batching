@@ -25,33 +25,17 @@ export function AppHeader() {
         <div className="flex items-center gap-3">
           {/* Identity Chip */}
           <div className="flex items-center">
-            {isAdmin ? (
-              <Link href="/admin"
-                className="flex items-center gap-2.5 rounded-full border border-brand-1/30 bg-brand-1/10 p-1 pr-4 hover:bg-brand-1/20 transition-all group"
-                title="Go to Admin Panel">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-1 text-[#f1b24a] shadow-sm group-hover:scale-105 transition-transform">
-                  <Shield size={16} fill="currentColor" fillOpacity={0.2} />
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-[9px] font-bold uppercase tracking-wider text-brand-1/60 leading-none mb-0.5">Administrator</span>
-                  <span className="text-[13px] font-bold text-brand-1 leading-none">
-                    {user.displayName || user.username}
-                  </span>
-                </div>
-              </Link>
-            ) : (
-              <div className="flex items-center gap-2.5 rounded-full border border-border bg-surface p-1 pr-4">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-stone-100 text-brand-1 font-bold text-xs border border-border shadow-sm">
-                  {(user.displayName || user.username)[0].toUpperCase()}
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-[9px] font-bold uppercase tracking-wider text-muted leading-none mb-0.5">Operator</span>
-                  <span className="text-[13px] font-bold text-stone-700 leading-none">
-                    {user.displayName || user.username}
-                  </span>
-                </div>
+            <div className="flex items-center gap-2.5 rounded-full border border-border bg-surface p-1 pr-4">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-stone-100 text-brand-1 font-bold text-xs border border-border shadow-sm">
+                {(user.displayName || user.username)[0].toUpperCase()}
               </div>
-            )}
+              <div className="flex flex-col">
+                <span className="text-[9px] font-bold uppercase tracking-wider text-muted leading-none mb-0.5">Operator</span>
+                <span className="text-[13px] font-bold text-stone-700 leading-none">
+                  {user.displayName || user.username}
+                </span>
+              </div>
+            </div>
           </div>
 
           {/* Subscription Days (Always visible) */}

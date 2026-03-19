@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 
-export function useSession({ redirectTo = "", redirectIfFound = false } = {}) {
+export function useSession({ redirectTo = "", redirectIfFound = false, requireRole = null } = {}) {
   const [user, setUser] = useState(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const router = useRouter();
@@ -35,8 +35,8 @@ export function useSession({ redirectTo = "", redirectIfFound = false } = {}) {
     const onFocus = () => fetchSession();
     window.addEventListener("focus", onFocus);
 
-    // Background poll every 3 minutes for long sessions
-    const interval = setInterval(fetchSession, 180000);
+    // Background poll every 10 minutes for long sessions (optimized for serverless)
+    const interval = setInterval(fetchSession, 600000);
 
     return () => {
       window.removeEventListener("focus", onFocus);
@@ -53,9 +53,15 @@ export function useSession({ redirectTo = "", redirectIfFound = false } = {}) {
       router.replace(redirectTo);
     } else if (user && redirectTo && redirectIfFound) {
       // Logged in, but we shouldn't be here (e.g. login page)
-      router.replace(redirectTo);
+      // Check role to redirect to correct dashboard
+      const dashboardRoute = user.role === "admin" ? "/admin" : "/";
+      router.replace(redirectTo === "/" ? dashboardRoute : redirectTo);
+    } else if (user && requireRole && user.role !== requireRole) {
+      // User has the wrong role for this page
+      const dashboardRoute = user.role === "admin" ? "/admin" : "/";
+      router.replace(dashboardRoute);
     }
-  }, [user, isLoaded, redirectTo, redirectIfFound, router]);
+  }, [user, isLoaded, redirectTo, redirectIfFound, requireRole, router]);
 
   const signOut = useCallback(async () => {
     try {

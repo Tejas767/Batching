@@ -24,8 +24,9 @@ export function useBatchEntry(user = null) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasMergedCloud, setHasMergedCloud] = useState(false);
   
-  // Track previous value to avoid saving if nothing changed
+  // Track previous values to avoid saving if nothing changed
   const lastSavedCloudSN = useRef("");
+  const lastSavedCloudCompany = useRef("");
 
   // 1. Initial Load from Local Storage (Immediate)
   useEffect(() => {
@@ -40,16 +41,28 @@ export function useBatchEntry(user = null) {
   // 2. Initial Sync (Cloud Settings Overwrite Local)
   useEffect(() => {
     if (isLoaded && user && !hasMergedCloud) {
-      // If cloud has a value, and it's different from local, upgrade local
+      const updates = {};
+
+      // If cloud has a plantSN value, and it's different from local, use cloud
       if (user.plantSN && user.plantSN !== entry.plantSN) {
-        setEntry(prev => ({ ...prev, plantSN: user.plantSN }));
+        updates.plantSN = user.plantSN;
+      }
+
+      // If cloud has a companyName value, and it's different from local, use cloud
+      if (user.companyName && user.companyName !== entry.companyName) {
+        updates.companyName = user.companyName;
+      }
+
+      if (Object.keys(updates).length > 0) {
+        setEntry(prev => ({ ...prev, ...updates }));
       }
       
       // Crucial: Mark what we have in cloud right now so we don't "save" it back
       lastSavedCloudSN.current = user.plantSN || entry.plantSN || "3851";
+      lastSavedCloudCompany.current = user.companyName || entry.companyName || "";
       setHasMergedCloud(true);
     }
-  }, [user, isLoaded, hasMergedCloud, entry.plantSN]);
+  }, [user, isLoaded, hasMergedCloud, entry.plantSN, entry.companyName]);
 
   // 3. Keep Local Storage sync
   useEffect(() => {
@@ -58,26 +71,34 @@ export function useBatchEntry(user = null) {
     }
   }, [entry, isLoaded]);
 
-  // 4. Debounced Cloud Save
+  // 4. Debounced Cloud Save (plantSN + companyName)
   useEffect(() => {
     // Only save if we have a user, local is ready, and we've already done the initial merge
     if (!isLoaded || !hasMergedCloud || !user) return;
 
-    const currentVal = entry.plantSN || "3851";
+    const currentSN = entry.plantSN || "3851";
+    const currentCompany = entry.companyName || "";
     
-    // Don't save if it matches the last thing we got from or sent to cloud
-    if (currentVal === lastSavedCloudSN.current) return;
+    // Check if either value changed from what's in cloud
+    const snChanged = currentSN !== lastSavedCloudSN.current;
+    const companyChanged = currentCompany !== lastSavedCloudCompany.current;
+    
+    if (!snChanged && !companyChanged) return;
 
     const timer = setTimeout(async () => {
       try {
+        const payload = {};
+        if (snChanged) payload.plantSN = currentSN;
+        if (companyChanged) payload.companyName = currentCompany;
+
         const res = await fetch("/api/settings/plant-sn", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ plantSN: currentVal }),
+          body: JSON.stringify(payload),
         });
         if (res.ok) {
-          lastSavedCloudSN.current = currentVal;
-          // toast.success("Settings synced to cloud", { id: "cloud-sync" });
+          if (snChanged) lastSavedCloudSN.current = currentSN;
+          if (companyChanged) lastSavedCloudCompany.current = currentCompany;
         }
       } catch (err) {
         console.error("Cloud Sync Error:", err);
@@ -85,7 +106,7 @@ export function useBatchEntry(user = null) {
     }, 1500);
 
     return () => clearTimeout(timer);
-  }, [entry.plantSN, isLoaded, hasMergedCloud, user]);
+  }, [entry.plantSN, entry.companyName, isLoaded, hasMergedCloud, user]);
 
   const updateField = useCallback((key, value) => {
     if (key === "qty" && Number(value) > 100) return;

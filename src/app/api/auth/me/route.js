@@ -31,6 +31,16 @@ export async function GET() {
       return Response.json({ data: null, error: "Account disabled" }, { status: 403 });
     }
 
+    // Check subscription expiry (operators only — admins never expire)
+    if (user.role === "operator" && user.expiresAt && new Date() > user.expiresAt) {
+      // Auto-disable expired account so the poller kicks them out
+      await User.findByIdAndUpdate(user._id, { isActive: false });
+      return Response.json(
+        { data: null, error: "Your subscription has expired. Contact admin to renew." },
+        { status: 403 }
+      );
+    }
+
     return Response.json({
       data: {
         id:            user._id,
@@ -39,6 +49,7 @@ export async function GET() {
         role:          user.role,
         isActive:      user.isActive,
         plantSN:       user.plantSN || "", 
+        companyName:   user.companyName || "",
         daysRemaining: user.expiresAt
           ? Math.max(0, Math.ceil((new Date(user.expiresAt) - Date.now()) / 86400000))
           : null,

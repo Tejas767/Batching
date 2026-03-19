@@ -10,17 +10,22 @@ export async function POST(request) {
   }
 
   try {
-    const { plantSN } = await request.json();
+    const body = await request.json();
+    const updates = {};
 
-    if (plantSN === undefined) {
-      return Response.json({ error: "plantSN is required" }, { status: 400 });
+    // Accept plantSN and/or companyName
+    if (body.plantSN !== undefined) updates.plantSN = body.plantSN;
+    if (body.companyName !== undefined) updates.companyName = body.companyName;
+
+    if (Object.keys(updates).length === 0) {
+      return Response.json({ error: "No settings provided" }, { status: 400 });
     }
 
     await connectDB();
 
     const user = await User.findByIdAndUpdate(
       session.id,
-      { plantSN },
+      updates,
       { returnDocument: "after" }
     );
 
@@ -28,7 +33,7 @@ export async function POST(request) {
       return Response.json({ error: "User not found" }, { status: 404 });
     }
 
-    return Response.json({ data: { plantSN: user.plantSN } });
+    return Response.json({ data: { plantSN: user.plantSN, companyName: user.companyName } });
   } catch (error) {
     console.error("POST /api/settings/plant-sn error:", error);
     return Response.json({ error: "Internal server error" }, { status: 500 });

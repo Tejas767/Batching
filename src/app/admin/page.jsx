@@ -344,7 +344,10 @@ function Field({ label, required, children }) {
 
 // ── Main Admin Page ───────────────────────────────────────────
 export default function AdminPage() {
-  const { user, isLoaded, isSignedIn } = useSession({ redirectTo: "/login" });
+  const { user, isLoaded, isSignedIn } = useSession({ 
+    redirectTo: "/login",
+    requireRole: "admin"
+  });
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);

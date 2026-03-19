@@ -26,4 +26,7 @@ const CustomerSchema = new Schema(
   }
 );
 
+// Compound index: fast "get my customers sorted by newest" queries
+CustomerSchema.index({ userId: 1, createdAt: -1 });
+
 export default models.Customer || model("Customer", CustomerSchema);
