@@ -8,15 +8,13 @@
 
 import { motion } from "framer-motion";
 import { useSession } from "@/hooks/useSession";
-import { LogOut, AlertTriangle, Shield } from "lucide-react";
-import Link from "next/link";
+import { LogOut, AlertTriangle } from "lucide-react";
 
 export function AppHeader() {
   const { user, signOut } = useSession();
 
   const daysRemaining = user?.daysRemaining ?? null;
   const showWarning = daysRemaining !== null && daysRemaining <= 7;
-  const isAdmin = user?.role === "admin";
 
   return (
     <div className="flex flex-col items-end gap-2">

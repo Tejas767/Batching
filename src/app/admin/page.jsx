@@ -356,9 +356,11 @@ export default function AdminPage() {
   const [deleteUser, setDeleteUser] = useState(null);
   const [togglingId, setTogglingId] = useState(null);
 
+  const isAdmin = isSignedIn && user?.role === "admin";
+
   const loadUsers = useCallback(async () => {
     // Only load if initialized and admin
-    if (!isSignedIn || user?.role !== "admin") return;
+    if (!isAdmin) return;
     setLoading(true);
     try {
       const res = await fetch("/api/admin/users");
@@ -369,7 +371,7 @@ export default function AdminPage() {
     } finally {
       setLoading(false);
     }
-  }, [isSignedIn, user]);
+  }, [isAdmin]);
 
   useEffect(() => { loadUsers(); }, [loadUsers]);
 

@@ -192,6 +192,9 @@ export default function Home() {
   // 2. Auth Guard — If not signed in, show nothing while background redirect happens
   if (!isSignedIn) return null;
 
+  // 3. Role Guard — If user is NOT an operator, show nothing while redirect happens
+  if (user?.role !== "operator") return null;
+
   // ── Main authenticated app ───────────────────
   return (
     <PageShell>
