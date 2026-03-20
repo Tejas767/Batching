@@ -153,10 +153,11 @@ export default function Home() {
     // 2. Auto-save to history
     saveToHistory(batchData).then(loadHistory);
 
-    // 3. Clear entry and increment docket (STAY ON ENTRY TAB)
+    // 3. Clear entry and increment docket, then go to Report tab
     resetForm();
+    setActiveTab("REPORT");
     toast.success(`Batch #${finalEntry.docketNo} SAVED ✅`, {
-      description: "Ready for next docket entry."
+      description: "Viewing report for this batch."
     });
   };
 
