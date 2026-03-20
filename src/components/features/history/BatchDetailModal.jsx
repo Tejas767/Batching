@@ -8,8 +8,9 @@
 
 import { Modal } from "@/components/ui/Modal";
 import { AutographicReport } from "@/components/features/report/AutographicReport";
+import { Printer } from "lucide-react";
 
-export function BatchDetailModal({ record, onClose }) {
+export function BatchDetailModal({ record, onClose, onPrint }) {
   if (!record) return null;
 
   // Reconstruct the data structures expected by AutographicReport
@@ -29,7 +30,18 @@ export function BatchDetailModal({ record, onClose }) {
       title={`Docket ${record.docketNo || "—"}`}
       maxWidth="max-w-5xl"
     >
-      <div className="-mx-8 -my-2 border-t border-border mt-4">
+      {/* Print button */}
+      <div className="flex justify-end -mt-2 mb-2">
+        <button
+          onClick={() => onPrint?.(record)}
+          className="flex items-center gap-2 rounded-xl bg-brand-1 px-5 py-2.5 text-xs font-bold uppercase tracking-widest text-white shadow-sm hover:bg-brand-1/90 transition-all hover:scale-[1.02]"
+        >
+          <Printer size={15} />
+          Print Report
+        </button>
+      </div>
+
+      <div className="-mx-8 -my-2 border-t border-border mt-2">
         {/* Render the exact same report layout */}
         <div className="p-8">
           <AutographicReport

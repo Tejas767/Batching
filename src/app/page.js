@@ -113,8 +113,8 @@ export default function Home() {
 
   // ── Print / Tab handlers ───────────────────────────
   const handleViewLastReport = () => {
-    // Sync if needed
-    if (!lastBatch && filteredHistory && filteredHistory.length > 0) {
+    // Always show the most recent batch from history
+    if (filteredHistory && filteredHistory.length > 0) {
       setLastBatch(filteredHistory[0]);
     }
     setActiveTab("REPORT");
@@ -371,6 +371,12 @@ export default function Home() {
       <BatchDetailModal
         record={historyDetails}
         onClose={() => setHistoryDetails(null)}
+        onPrint={(record) => {
+          // Load this history record into lastBatch so HiddenPrintReport renders it
+          setLastBatch(record);
+          setHistoryDetails(null); // Close modal before printing
+          setTimeout(() => window.print(), 400);
+        }}
       />
 
       {/* Delete Confirmation Modals */}
