@@ -285,10 +285,10 @@ export default function Home() {
           {activeTab === "REPORT" && (
             <div className="md:mx-auto md:max-w-5xl">
               <AutographicReport
-                entry={entry}
-                targets={targets}
-                reportData={reportData}
-                batchSize={batchSize}
+                entry={lastBatch || entry}
+                targets={lastBatch?.mixDesign || targets}
+                reportData={lastBatch || reportData}
+                batchSize={lastBatch?.batchSize || batchSize}
                 onPrint={handlePrint}
                 onSaveToHistory={handleSaveToHistory}
                 onUpdateField={handleUpdateField}
@@ -398,10 +398,10 @@ export default function Home() {
       />
       {/* Always-mounted hidden print DOM — captured by window.print() regardless of active tab */}
       <HiddenPrintReport
-        entry={entry}
-        targets={targets}
-        reportData={reportData}
-        batchSize={batchSize}
+        entry={lastBatch || entry}
+        targets={lastBatch?.mixDesign || targets}
+        reportData={lastBatch || reportData}
+        batchSize={lastBatch?.batchSize || batchSize}
       />
     </PageShell>
   );
