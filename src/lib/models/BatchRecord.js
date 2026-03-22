@@ -34,6 +34,7 @@ const BatchRecordSchema = new Schema(
     batchStop:    { type: String, default: "" },
     plantSN:       { type: String, default: "" },
     companyName:   { type: String, default: "" },
+    orderNo:       { type: String, default: "" },
 
     // ── Report Snapshot (saved at print time) ─────
     // NOTE: reportRows are NOT stored — they are reconstructed client-side

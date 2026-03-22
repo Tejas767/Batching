@@ -20,6 +20,7 @@ const FIELDS = [
   { label: "GRADE",         key: "grade",         type: "text",   editable: true },
   { label: "QTY (M³)",      key: "qty",           type: "number", editable: true },
   { label: "TRUCK NUMBER",  key: "truckNumber",   type: "text",   editable: true },
+  { label: "ORDER NO",      key: "orderNo",       type: "text",   editable: true },
   { label: "DRIVER",        key: "truckDriver",   type: "text",   editable: false },
 ];
 
@@ -40,6 +41,7 @@ export function BatchEntryForm({
   const gradeRef = useRef(null);
   const qtyRef = useRef(null);
   const truckRef = useRef(null);
+  const orderRef = useRef(null);
   const startRef = useRef(null);
   const stopRef = useRef(null);
 
@@ -49,12 +51,13 @@ export function BatchEntryForm({
     grade:        gradeRef,
     qty:          qtyRef,
     truckNumber:  truckRef,
+    orderNo:      orderRef,
     batchStart:   startRef,
     batchStop:    stopRef,
   };
 
   const editableOrder = [
-    "docketNo", "customerName", "grade", "qty", "truckNumber", "batchStart", "batchStop"
+    "docketNo", "customerName", "grade", "qty", "truckNumber", "orderNo", "batchStart", "batchStop"
   ];
 
   const handleEnterKey = (e, currentKey) => {

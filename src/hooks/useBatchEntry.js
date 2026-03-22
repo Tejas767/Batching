@@ -17,6 +17,7 @@ const defaultEntry = {
   batchStop: "",
   plantSN: "",
   companyName: "",
+  orderNo: "",
 };
 
 export function useBatchEntry(user = null) {

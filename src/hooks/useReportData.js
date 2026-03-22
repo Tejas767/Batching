@@ -78,11 +78,11 @@ export function useReportData(entry, targets, batchSize = MIXER_CAPACITY, differ
       const t = (key) => Number(targets[key]) || 0;
 
       // Group: Aggregate — original VBA ±3
-      row.mm10  = t("mm10")   > 0 ? t("mm10")   + randBetween(rowRng, -3, 3) : 0;
-      row.cSan  = t("cSan")   > 0 ? t("cSan")   + randBetween(rowRng, -3, 3) : 0;
+      row.mm10  = t("mm10")   > 0 ? t("mm10")   + randBetween(rowRng, -2, 2) : 0;
+      row.cSan  = t("cSan")   > 0 ? t("cSan")   + randBetween(rowRng, -2, 2) : 0;
       row.moi   = "0.0";
-      row.cSand = t("cSand")  > 0 ? t("cSand")  + randBetween(rowRng, -3, 3) : 0;
-      row.mm20  = t("mm20")   > 0 ? t("mm20")   + randBetween(rowRng, -3, 3) : 0;
+      row.cSand = t("cSand")  > 0 ? t("cSand")  + randBetween(rowRng, -2, 2) : 0;
+      row.mm20  = t("mm20")   > 0 ? t("mm20")   + randBetween(rowRng, -2, 2) : 0;
 
       // Group: Cement — original VBA ±2
       row.cem1   = t("cem1")   > 0 ? t("cem1")   + randBetween(rowRng, -2, 2) : 0;
@@ -92,14 +92,14 @@ export function useReportData(entry, targets, batchSize = MIXER_CAPACITY, differ
       // Group: Water / Ice — original VBA ±1 for ice, ±4 for water
       row.watIce = t("watIce") > 0 ? t("watIce") + randBetween(rowRng, -1, 1) : 0;
       row.pm     = 0;
-      row.water  = t("water")  > 0 ? t("water")  + randBetween(rowRng, -4, 4) : 0;
+      row.water  = t("water")  > 0 ? t("water")  + randBetween(rowRng, -2, 2) : 0;
 
       // Group: Silica — original VBA ±1
       row.silica = t("silica") > 0 ? t("silica") + randBetween(rowRng, -1, 1) : 0;
 
       // Group: Admixture — original VBA ±0.07 floating point
-      row.admix1 = t("admix1") > 0 ? Number((t("admix1") + (rowRng() - 0.5) * 0.14).toFixed(2)) : 0.00;
-      row.admix2 = t("admix2") > 0 ? Number((t("admix2") + (rowRng() - 0.5) * 0.14).toFixed(2)) : 0.00;
+      row.admix1 = t("admix1") > 0 ? Number((t("admix1") + (rowRng() - 0.5) * 0.04).toFixed(2)) : 0.00;
+      row.admix2 = t("admix2") > 0 ? Number((t("admix2") + (rowRng() - 0.5) * 0.04).toFixed(2)) : 0.00;
 
       rows.push(row);
     }

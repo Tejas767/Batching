@@ -54,11 +54,11 @@ export async function GET(request) {
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
       async start(controller) {
-        const header = "Date/Time,Docket No,Customer,Site,Grade,Qty,Truck,Driver,Start Time,Stop Time\n";
+        const header = "Date/Time,Docket No,Customer,Site,Grade,Qty,Truck,Driver,Order No,Start Time,Stop Time\n";
         controller.enqueue(encoder.encode(header));
 
         const cursor = BatchRecord.find(query)
-          .select("createdAt docketNo customerName site grade qty truckNumber truckDriver batchStart batchStop")
+          .select("createdAt docketNo customerName site grade qty truckNumber truckDriver orderNo batchStart batchStop")
           .sort({ createdAt: -1 })
           .lean()
           .cursor();
@@ -73,6 +73,7 @@ export async function GET(request) {
             csvEscape(r.qty),
             csvEscape(r.truckNumber),
             csvEscape(r.truckDriver),
+            csvEscape(r.orderNo),
             csvEscape(r.batchStart),
             csvEscape(r.batchStop),
           ].join(",") + "\n";
