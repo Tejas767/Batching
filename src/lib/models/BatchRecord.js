@@ -36,8 +36,11 @@ const BatchRecordSchema = new Schema(
     companyName:   { type: String, default: "" },
 
     // ── Report Snapshot (saved at print time) ─────
+    // NOTE: reportRows are NOT stored — they are reconstructed client-side
+    // using useReportData (deterministic seeded RNG from docketNo+customer+grade+qty)
     mixDesign:    { type: Schema.Types.Mixed, default: {} },
-    reportRows:   { type: [Schema.Types.Mixed], default: [] },
+    differences:  { type: Schema.Types.Mixed, default: {} },
+    batchSize:    { type: Number, default: 0.5 },
     totals:       { type: Schema.Types.Mixed, default: {} },
     setWeights:   { type: Schema.Types.Mixed, default: {} },
     totalBatches: { type: Number, default: 0 },
@@ -49,11 +52,13 @@ const BatchRecordSchema = new Schema(
 
 // ── Indexes for fast queries ───────────────────────
 // PRIMARY: Most queries are "get my records sorted newest first"
-// This compound index covers the entire paginated query without scanning the collection
 BatchRecordSchema.index({ userId: 1, createdAt: -1 });
 
-// SEARCH: Text index for fast $regex searches across key fields
-BatchRecordSchema.index({ docketNo: 1 });
+// UNIQUE: Each user can only have one record per docket number
+// Uses B-tree lookup (~17 checks for 300K records instead of full scan)
+BatchRecordSchema.index({ userId: 1, docketNo: 1 }, { unique: true });
+
+// SEARCH: Indexes for fast $regex searches across key fields
 BatchRecordSchema.index({ customerName: 1 });
 BatchRecordSchema.index({ site: 1 });
 BatchRecordSchema.index({ truckNumber: 1 });

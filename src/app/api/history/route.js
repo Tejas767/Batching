@@ -8,8 +8,19 @@
 import { connectDB } from "@/lib/mongodb";
 import BatchRecord from "@/lib/models/BatchRecord";
 import { getSession } from "@/lib/auth";
+import mongoose from "mongoose";
 
 export const dynamic = "force-dynamic";
+
+// ── Helpers ────────────────────────────────────────
+function escapeRegex(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function truncate(val, max = 200) {
+  if (!val) return "";
+  return String(val).slice(0, max);
+}
 
 // ── GET: fetch history (paginated) ─────────────────────────────
 export async function GET(request) {
@@ -26,14 +37,15 @@ export async function GET(request) {
     const to     = searchParams.get("to");
     const search = searchParams.get("search");
 
-    // ── Pagination params ──────────────────────────
+    // ── Pagination params (capped at 200 to prevent OOM) ──
     const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
-    const MAX_LIMIT = 300000;
+    const MAX_LIMIT = 200;
     const requestedLimit = parseInt(searchParams.get("limit") || "50", 10);
     const limit = Math.min(MAX_LIMIT, Math.max(1, requestedLimit));
     const skip = (page - 1) * limit;
 
-    const query = { userId: session.id };
+    // Cast to ObjectId — aggregate() doesn't auto-cast like find()
+    const query = { userId: new mongoose.Types.ObjectId(session.id) };
 
     if (from || to) {
       query.createdAt = {};
@@ -42,7 +54,9 @@ export async function GET(request) {
     }
 
     if (search) {
-      const s = { $regex: search, $options: "i" };
+      // Escape regex special chars to prevent ReDoS attacks
+      const escaped = escapeRegex(search.trim().slice(0, 100));
+      const s = { $regex: escaped, $options: "i" };
       query.$or = [
         { docketNo: s },
         { customerName: s },
@@ -52,18 +66,34 @@ export async function GET(request) {
       ];
     }
 
-    // Count total matching records
-    const hasFilters = !!(from || to || search);
-    const total = hasFilters
-      ? await BatchRecord.countDocuments(query)
-      : await BatchRecord.countDocuments({ userId: session.id });
+    // ── Single DB round-trip using $facet ──────────────────
+    const [result] = await BatchRecord.aggregate([
+      { $match: query },
+      {
+        $facet: {
+          metadata: [{ $count: "total" }],
+          records: [
+            { $sort: { createdAt: -1 } },
+            { $skip: skip },
+            { $limit: limit },
+            // Field projection — only return what the frontend needs
+            {
+              $project: {
+                createdAt: 1, docketNo: 1, customerName: 1,
+                site: 1, grade: 1, qty: 1, truckNumber: 1,
+                truckDriver: 1, batchStart: 1, batchStop: 1,
+                plantSN: 1, companyName: 1,
+                mixDesign: 1, differences: 1, batchSize: 1,
+                totals: 1, setWeights: 1, totalBatches: 1,
+              },
+            },
+          ],
+        },
+      },
+    ]);
 
-    const records = await BatchRecord
-      .find(query)
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .lean();
+    const total = result.metadata[0]?.total ?? 0;
+    const records = result.records;
 
     // Normalize to match existing frontend shape
     const data = records.map((r) => ({
@@ -81,8 +111,8 @@ export async function GET(request) {
       plantSN:      r.plantSN,
       companyName:  r.companyName,
       mixDesign:    r.mixDesign,
-      reportRows:   r.reportRows,
-      rows:         r.reportRows,
+      differences:  r.differences,
+      batchSize:    r.batchSize,
       totals:       r.totals,
       setWeights:   r.setWeights,
       totalBatches: r.totalBatches,
@@ -98,7 +128,7 @@ export async function GET(request) {
       },
     });
   } catch (error) {
-    console.error("GET /api/history error:", error.message);
+    console.error("GET /api/history error:", error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 }
@@ -116,22 +146,25 @@ export async function POST(request) {
     const body = await request.json();
     const item = body.item || body;
 
+    // Server-side string validation — cap field lengths to prevent storage bloat
     const record = await BatchRecord.create({
       userId:       session.id,
-      username:     session.username,
-      docketNo:     item.docketNo     ?? "",
-      customerName: item.customerName ?? "",
-      site:         item.site         ?? "",
-      grade:        item.grade        ?? "",
-      qty:          item.qty          ?? "",
-      truckDriver:  item.truckDriver  ?? "",
-      truckNumber:  item.truckNumber  ?? "",
-      batchStart:   item.batchStart   ?? "",
-      batchStop:    item.batchStop    ?? "",
-      plantSN:      item.plantSN      ?? "",
-      companyName:  item.companyName  ?? "",
+      username:     truncate(session.username, 50),
+      docketNo:     truncate(item.docketNo, 50),
+      customerName: truncate(item.customerName, 100),
+      site:         truncate(item.site, 100),
+      grade:        truncate(item.grade, 20),
+      qty:          truncate(item.qty, 20),
+      truckDriver:  truncate(item.truckDriver, 100),
+      truckNumber:  truncate(item.truckNumber, 50),
+      batchStart:   truncate(item.batchStart, 30),
+      batchStop:    truncate(item.batchStop, 30),
+      plantSN:      truncate(item.plantSN, 50),
+      companyName:  truncate(item.companyName, 100),
       mixDesign:    item.mixDesign    ?? {},
-      reportRows:   item.reportRows   ?? item.rows ?? [],
+      differences:  item.differences  ?? {},
+      batchSize:    Number(item.batchSize) || 0.5,
+      // reportRows are NOT stored — reconstructed client-side via useReportData
       totals:       item.totals       ?? {},
       setWeights:   item.setWeights   ?? {},
       totalBatches: item.totalBatches ?? 0,
@@ -145,7 +178,13 @@ export async function POST(request) {
       },
     });
   } catch (error) {
-    console.error("POST /api/history error:", error.message);
+    if (error.code === 11000 && error.keyPattern && error.keyPattern.docketNo) {
+      return Response.json(
+        { error: `Docket number ${error.keyValue.docketNo} already exists!` },
+        { status: 409 }
+      );
+    }
+    console.error("POST /api/history error:", error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 }
@@ -193,7 +232,7 @@ export async function DELETE(request) {
 
     return Response.json({ data: { deleted: true } });
   } catch (error) {
-    console.error("DELETE /api/history error:", error.message);
+    console.error("DELETE /api/history error:", error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 }

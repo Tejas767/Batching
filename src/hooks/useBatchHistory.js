@@ -7,7 +7,6 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
-import { reportColumns } from "@/constants/mixConfig";
 
 const PAGE_SIZE = 50;
 
@@ -82,13 +81,18 @@ export function useBatchHistory() {
   // ── Save a batch record to MongoDB ───────────────────────────
   const saveToHistory = useCallback(async (data) => {
     try {
-      await fetch("/api/history", {
+      const res = await fetch("/api/history", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
         body:    JSON.stringify({ item: data }),
       });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || "Failed to save history");
+      }
+      return await res.json();
     } catch (err) {
-      console.error("saveToHistory error:", err);
+      throw err; // Re-throw to be caught by the UI
     }
   }, []);
 
@@ -146,7 +150,7 @@ export function useBatchHistory() {
     setHistoryTo("");
   }, []);
 
-  // ── Export to CSV (Downloads ALL filtered records, not just current page) ──
+  // ── Export to CSV (streams from server — safe for 300K+ records) ──
   const exportToCSV = useCallback(async () => {
     setIsExporting(true);
     try {
@@ -154,50 +158,21 @@ export function useBatchHistory() {
       if (historyFrom)         params.set("from",   historyFrom);
       if (historyTo)           params.set("to",     historyTo);
       if (historyQuery.trim()) params.set("search", historyQuery);
-      params.set("limit", "300000"); // Request a higher limit for export
-      
-      const res  = await fetch(`/api/history?${params.toString()}`);
-      const json = await res.json();
-      const allRecords = json.data || [];
 
-      if (!allRecords.length) {
+      const res = await fetch(`/api/history/export?${params.toString()}`);
+      
+      if (!res.ok) {
+        alert("Export failed. Please try again.");
+        return;
+      }
+
+      // Download the streamed CSV file
+      const blob = await res.blob();
+      if (blob.size < 50) {
         alert("No records to export.");
         return;
       }
 
-      // 2. Prepare Detailed CSV Headers
-      // We want Docket Info + Material Set/Actual weights
-      const materialCols = reportColumns.filter(c => c.key !== "pm" && c.key !== "moi");
-      
-      const header = [
-        "Date/Time", "Docket No", "Customer", "Site", "Grade", "Qty (m3)", "Truck", "Driver", "Start Time", "Stop Time",
-        ...materialCols.flatMap(c => [`Set ${c.label}`, `Act ${c.label}`])
-      ];
-
-      const rows = allRecords.map(r => {
-        const metadata = [
-          `"${new Date(r.created_at).toLocaleString('en-IN')}"`,
-          `"${r.docketNo || ""}"`,
-          `"${r.customerName || ""}"`,
-          `"${r.site || ""}"`,
-          `"${r.grade || ""}"`,
-          `"${r.qty || "0"}"`,
-          `"${r.truckNumber || ""}"`,
-          `"${r.truckDriver || ""}"`,
-          `"${r.batchStart || ""}"`,
-          `"${r.batchStop || ""}"`
-        ];
-
-        const weights = materialCols.flatMap(c => [
-          r.setWeights?.[c.key] || "0",
-          r.totals?.[c.key] || "0"
-        ]);
-
-        return [...metadata, ...weights];
-      });
-
-      const csvContent = [header, ...rows].map(e => e.join(",")).join("\n");
-      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.setAttribute("href", url);
@@ -205,6 +180,7 @@ export function useBatchHistory() {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      URL.revokeObjectURL(url);
     } catch (err) {
       console.error("exportToCSV error:", err);
     } finally {

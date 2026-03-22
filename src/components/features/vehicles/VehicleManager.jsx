@@ -20,6 +20,7 @@ export function VehicleManager({
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false);
+  const [deleteVehicleId, setDeleteVehicleId] = useState(null);
   const pageSize = 10;
 
   const driverRef = useRef(null);
@@ -158,9 +159,7 @@ export function VehicleManager({
                 </div>
                 <div className="w-1/3 flex justify-end">
                   <button
-                    onClick={() => {
-                      if (confirm("Delete this vehicle?")) onDelete(vehicle._id);
-                    }}
+                    onClick={() => setDeleteVehicleId(vehicle._id)}
                     className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-red-600 hover:bg-red-50 transition-colors rounded-lg border border-red-100 hover:border-red-200"
                   >
                     Delete
@@ -196,6 +195,20 @@ export function VehicleManager({
           </div>
         )}
       </Card>
+
+      {/* Individual delete confirm */}
+      <ConfirmDialog
+        open={!!deleteVehicleId}
+        onClose={() => setDeleteVehicleId(null)}
+        onConfirm={() => {
+          onDelete(deleteVehicleId);
+          setDeleteVehicleId(null);
+        }}
+        title="Delete Vehicle"
+        message="Are you sure you want to delete this vehicle?"
+        confirmLabel="Delete"
+        variant="danger"
+      />
     </div>
   );
 }

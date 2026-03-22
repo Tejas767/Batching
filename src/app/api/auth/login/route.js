@@ -4,6 +4,7 @@
  * Authenticates a user with username + password.
  * Checks: account active, subscription not expired, credentials valid.
  * Sets a JWT session cookie on success.
+ * Rate limited: max 10 attempts per IP per 15 minutes.
  */
 import { connectDB } from "@/lib/mongodb";
 import User from "@/lib/models/User";
@@ -11,7 +12,49 @@ import { verifyPassword, setSessionCookie } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
+// ── In-memory rate limiter ──────────────────────────
+// For production at scale, replace with Upstash Redis
+const loginAttempts = new Map();
+
+function checkRateLimit(ip) {
+  const now = Date.now();
+  const windowMs = 15 * 60 * 1000; // 15 minutes
+  const maxAttempts = 10;
+
+  const record = loginAttempts.get(ip);
+
+  // No record or window expired — start fresh
+  if (!record || now > record.resetAt) {
+    loginAttempts.set(ip, { count: 1, resetAt: now + windowMs });
+    return false;
+  }
+
+  // Within window — check count
+  if (record.count >= maxAttempts) return true; // rate limited
+
+  record.count++;
+  loginAttempts.set(ip, record);
+  return false;
+}
+
+// Clean up old entries every 30 minutes to prevent memory leak
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, val] of loginAttempts) {
+    if (now > val.resetAt) loginAttempts.delete(key);
+  }
+}, 30 * 60 * 1000);
+
 export async function POST(request) {
+  // Rate limit check
+  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+  if (checkRateLimit(ip)) {
+    return Response.json(
+      { error: "Too many login attempts. Please wait 15 minutes." },
+      { status: 429 }
+    );
+  }
+
   try {
     await connectDB();
 

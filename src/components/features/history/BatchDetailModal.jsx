@@ -3,24 +3,26 @@
  *
  * CDD Layer 3: Slide-in detail panel for a single history record.
  * Shows metadata, per-batch rows table, and totals.
+ * Report rows are reconstructed client-side using useReportData.
  */
 "use client";
 
 import { Modal } from "@/components/ui/Modal";
 import { AutographicReport } from "@/components/features/report/AutographicReport";
+import { useReportData } from "@/hooks/useReportData";
 import { Printer } from "lucide-react";
 
 export function BatchDetailModal({ record, onClose, onPrint }) {
   if (!record) return null;
 
-  // Reconstruct the data structures expected by AutographicReport
+  // Reconstruct report data client-side (deterministic from docketNo+customer+grade+qty)
   const entry = record;
   const targets = record.mixDesign || {};
-  const reportData = {
-    rows: record.reportRows || [],
-    totals: record.totals || {},
-    totalBatches: (record.reportRows || []).length,
-  };
+  const differences = record.differences || {};
+  const batchSize = record.batchSize || 0.5;
+
+  // useReportData generates the exact same rows as when the batch was originally created
+  const reportData = useReportData(entry, targets, batchSize, differences);
 
   return (
     <Modal
@@ -48,7 +50,7 @@ export function BatchDetailModal({ record, onClose, onPrint }) {
             entry={entry}
             targets={targets}
             reportData={reportData}
-            batchSize={record.batchSize}
+            batchSize={batchSize}
             hideActions={true}
           />
         </div>

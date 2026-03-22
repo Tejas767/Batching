@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/Button";
 import { Printer, Save } from "lucide-react";
 import { toast } from "sonner";
 import { reportColumns, groupOrder } from "@/constants/mixConfig";
+import { useReportData } from "@/hooks/useReportData";
 
 const LOGO_SRC = "/report_logo.jpg";
 
@@ -21,7 +22,7 @@ const getActualDisplay = (colKey, val) => {
   return val || 0;
 };
 
-// ── CLASSIC LAYOUT (The actual document design) ─────────────────────────────
+// ── CLASSIC LAYOUT (Used for Printing) ──────────────────────────────────────
 
 function ClassicReportLayout({ entry, targets, reportData, batchSize = 0.5 }) {
   const productionQty = Number(entry.qty || 0);
@@ -29,59 +30,152 @@ function ClassicReportLayout({ entry, targets, reportData, batchSize = 0.5 }) {
     day: "2-digit", month: "short", year: "numeric"
   }).replace(/ /g, "-");
 
+  const bSize = Number(batchSize || 0.5);
+
   return (
-    <div className="bg-white text-black print:block print:m-0 print:p-0">
+    <div className="bg-white text-black">
       <style>{`
+        /* ── RESET ALL TRANSFORMS ON PRINT ── */
         @media print {
           @page {
-            size: A4;
-            margin: 0;
+            size: A4 portrait;
+            margin: 8mm 6mm 6mm 6mm;
           }
-          body {
-            print-color-adjust: exact;
-            -webkit-print-color-adjust: exact;
+
+          html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            print-color-adjust: exact !important;
+            -webkit-print-color-adjust: exact !important;
           }
+
+          /* Kill every transform/scale that screen preview uses */
+          * {
+            transform: none !important;
+            -webkit-transform: none !important;
+          }
+
           .a4-print-container {
-            width: 210mm;
-            min-height: 297mm;
-            margin: 0 auto;
-            padding: 8mm 6mm 5mm 6mm;
-            box-sizing: border-box;
-            background: white;
-            color: black;
+            width: 100% !important;
+            max-width: 100% !important;
+            min-height: auto !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            box-sizing: border-box !important;
+            background: white !important;
+            color: black !important;
+            font-size: 8pt !important;
+            font-weight: 400 !important;
+            -webkit-text-stroke: 0px black !important;
+          }
+
+          .rep-header-main {
+            font-size: 12.5pt !important;
+            font-weight: 900 !important;
+            -webkit-text-stroke: 0px black !important;
+          }
+
+          .rep-system-ver {
+            font-size: 12pt !important;
+            font-weight: 900 !important;
+            -webkit-text-stroke: 0.1px black !important;
+          }
+
+          .rep-doc-title {
+            font-size: 9.5pt !important;
+            font-weight: 900 !important;
+            -webkit-text-stroke: 0.2px black !important;
+          }
+
+          .rep-kv-table td {
+            font-size: 8.2pt !important;
+            font-weight: 400 !important;
+            -webkit-text-stroke: 0.1px black !important;
+          }
+
+          .rep-kv-table td.top-meta-k,
+          .rep-kv-table td.meta-k,
+          .rep-kv-table td.qty-k,
+          .rep-kv-table .k {
+            font-weight: 800 !important;
+            -webkit-text-stroke: 0.1px black !important;
+          }
+
+          .rep-plant-sn-right {
+            font-size: 10pt !important;
+            font-weight: 800 !important;
+            -webkit-text-stroke: 0.1px black !important;
+          }
+
+          .rep-data-table {
+            font-size: 8.5pt !important;
+            -webkit-text-stroke: 0.1px black !important;
+          }
+
+          .rep-data-table thead .group-th {
+            font-size: 12pt !important;
+            font-weight: 900 !important;
+            -webkit-text-stroke: 0.1px black !important;
+          }
+
+          .rep-data-table thead .col-th {
+            font-size: 10pt !important;
+            font-weight: 400 !important;
+            -webkit-text-stroke: 0.1px black !important;
+          }
+
+          .rep-data-table .label-cell {
+            font-size: 8pt !important;
+            font-weight: 400 !important;
+            -webkit-text-stroke: 0.1px black !important;
+          }
+
+          .rep-data-table .totals-row td {
+            font-weight: 400 !important;
+            -webkit-text-stroke: 0px black !important;
+          }
+
+          .rep-schwing {
+            font-size: 8pt !important;
+            font-weight: 900 !important;
+          }
+
+          .rep-logo-img {
+            filter: grayscale(1) contrast(1.6) brightness(0.85) !important;
           }
         }
-        
+
+        /* ── SCREEN STYLES (preview only) ── */
         .a4-print-container {
           width: 210mm;
+          max-width: 210mm;
           min-height: 297mm;
           margin: 0 auto;
           padding: 8mm 6mm 5mm 6mm;
           font-family: "Times New Roman", Times, serif;
-          font-size: 9pt;
-          line-height: 1.2;
+          font-size: 8pt;
+          font-weight: 400;
+          line-height: 1.15;
           letter-spacing: 0px;
           box-sizing: border-box;
           color: black;
-          background: white;
-          text-align: left;
+          -webkit-text-stroke: 0px black;
         }
 
         .rep-header-main {
           text-align: center;
-          font-weight: bold;
-          font-size: 16pt;
-          margin-bottom: 2mm;
+          font-weight: 900;
+          font-size: 12.5pt;
+          margin-bottom: 1mm;
           text-transform: uppercase;
-          font-family: "Times New Roman", Times, serif;
-          letter-spacing: 0.5px;
+          -webkit-text-stroke: 0.5px black;
         }
 
         .rep-logo-area {
           display: flex;
           align-items: flex-start;
           margin-bottom: 1mm;
-          padding-left: 16mm;
+          padding-left: 6mm;
         }
 
         .rep-logo-col {
@@ -96,32 +190,32 @@ function ClassicReportLayout({ entry, targets, reportData, batchSize = 0.5 }) {
           height: 40px;
           object-fit: contain;
           margin-bottom: 1.5mm;
-          filter: grayscale(1) contrast(1.2) brightness(1.1);
+          filter: grayscale(1) contrast(1.6) brightness(0.85);
         }
 
         .rep-schwing {
-          font-weight: bold;
-          font-size: 9.5pt;
+          font-weight: 900;
+          font-size: 9pt;
           line-height: 1.1;
-          font-family: "Times New Roman", Times, serif;
+          -webkit-text-stroke: 0.3px black;
         }
 
         .rep-system-ver {
-          font-weight: bold;
-          font-size: 12.5pt;
+          font-weight: 900;
+          font-size: 10pt;
           padding-left: 1mm;
           padding-top: 3.8mm;
-          font-family: "Times New Roman", Times, serif;
           letter-spacing: -0.1px;
+          -webkit-text-stroke: 0.4px black;
         }
 
         .rep-doc-title {
           text-align: center;
-          font-weight: bold;
-          font-size: 10pt;
-          margin: 1mm 0 8mm 0;
-          font-family: "Times New Roman", Times, serif;
+          font-weight: 900;
+          font-size: 9.5pt;
+          margin: 0.5mm 0 4mm 0;
           letter-spacing: 0.3px;
+          -webkit-text-stroke: 0.2px black;
         }
 
         .rep-meta-grid {
@@ -129,130 +223,135 @@ function ClassicReportLayout({ entry, targets, reportData, batchSize = 0.5 }) {
           justify-content: space-between;
           align-items: flex-start;
           margin-bottom: 0mm;
-          margin-top: 2mm;
+          margin-top: 1mm;
           width: 100%;
         }
 
         .rep-meta-left {
-          width: 121mm;
+          width: 100mm;
           flex-shrink: 0;
         }
 
         .rep-kv-table {
-          width: auto;
+          width: 100%;
           border-collapse: collapse;
-          table-layout: auto;
+          table-layout: fixed;
         }
 
         .lower-meta {
           margin-left: 2mm;
-          margin-top: 4mm;
+          margin-top: 2mm;
         }
 
         .rep-kv-table td {
-          padding: 0.8mm 0;
+          padding: 0.4mm 0;
           vertical-align: top;
-          line-height: 1.2;
-          font-size: 9pt;
+          font-size: 8.2pt;
+          font-weight: 400;
         }
 
         .rep-kv-table .k {
-          font-weight: bold;
-          letter-spacing: 0.6px;
+          font-weight: 900;
+          letter-spacing: 0.2px;
           white-space: nowrap;
         }
 
         .top-meta-k {
-          width: 29mm;
-          font-weight: bold;
+          width: 28mm;
+          font-weight: 800;
+          -webkit-text-stroke: 0.1px black;
           white-space: nowrap;
-          font-family: "Times New Roman", Times, serif;
         }
 
         .top-meta-s {
-          width: 3mm;
+          width: 2mm;
           text-align: left;
-          font-weight: bold;
+          font-weight: 400;
+          -webkit-text-stroke: 0.1px black;
         }
 
         .top-meta-v {
-          font-weight: normal;
-          display: inline-block;
+          font-weight: 400;
           white-space: nowrap;
-          font-family: "Times New Roman", Times, serif;
+          -webkit-text-stroke: 0.1px black;
         }
 
         .meta-k {
-          width: 50mm;
-          font-weight: bold;
+          width: 48mm;
+          font-weight: 800;
+          -webkit-text-stroke: 0.1px black;
           white-space: nowrap;
-          font-family: "Times New Roman", Times, serif;
         }
 
         .meta-s {
-          width: 3mm;
+          width: 2mm;
           text-align: center;
-          font-weight: bold;
+          font-weight: 400;
+          -webkit-text-stroke: 0.1px black;
         }
 
         .meta-v {
-          font-weight: normal;
+          font-weight: 400;
+          -webkit-text-stroke: 0.1px black;
           text-transform: uppercase;
-          padding-left: 4.5mm;
+          transform: translateX(1mm);
           display: inline-block;
           white-space: nowrap;
-          font-family: "Times New Roman", Times, serif;
         }
 
         .rep-plant-sn-right {
-          text-align: left;
-          font-weight: bold;
-          font-size: 9.5pt;
-          margin-bottom: 2mm;
+          font-size: 10pt;
+          font-weight: 800;
+          -webkit-text-stroke: 0.1px black;
+          margin-bottom: 1mm;
           margin-top: 0.2mm;
           white-space: nowrap;
           width: max-content;
-          transform: translateX(7.5mm) translateY(-4mm);
-          font-family: "Times New Roman", Times, serif;
+          transform: translateY(-4mm);
         }
 
         .rep-plant-sn-right .v {
-          font-weight: normal;
+          font-weight: 400;
           margin-left: 2mm;
+          -webkit-text-stroke: 0.1px black;
         }
 
         .right-kv {
+          width: 78mm;
           table-layout: fixed;
-          width: 75mm;
+          border-collapse: collapse;
         }
 
         .qty-k {
-          width: 40mm;
-          font-weight: bold;
+          width: 41mm;
+          font-weight: 800;
+          -webkit-text-stroke: 0.1px black;
           white-space: nowrap;
           text-align: left;
-          transform: translateX(6mm);
-          font-family: "Times New Roman", Times, serif;
+          transform: translateX(4mm);
         }
 
         .qty-s {
-          width: 6mm;
+          width: 3mm;
           text-align: left;
-          font-weight: bold;
+          font-weight: 400;
+          -webkit-text-stroke: 0.1px black;
         }
 
         .qty-v {
-          width: 13mm;
+          width: 15mm;
           text-align: left;
+          font-weight: 400;
           white-space: nowrap;
-          font-family: "Times New Roman", Times, serif;
+          -webkit-text-stroke: 0.1px black;
         }
 
         .qty-u {
-          width: 14mm;
-          text-align: right;
+          width: 18mm;
+          text-align: left;
+          font-weight: 400;
           white-space: nowrap;
-          font-family: "Times New Roman", Times, serif;
+          -webkit-text-stroke: 0.1px black;
         }
 
         .rep-data-table {
@@ -260,51 +359,50 @@ function ClassicReportLayout({ entry, targets, reportData, batchSize = 0.5 }) {
           border-collapse: collapse;
           table-layout: fixed;
           font-size: 8.5pt;
-          margin-top: 2mm;
+          margin-top: 1mm;
         }
 
         .rep-data-table thead th {
-          font-weight: bold;
+          font-weight: 400;
           text-align: center;
           padding: 0.5mm 0.2mm;
           vertical-align: bottom;
           letter-spacing: 0.2px;
+          -webkit-text-stroke: 0px black;
         }
 
         .rep-data-table thead .group-th {
-          font-size: 11pt;
-          font-weight: bold;
-          padding-top: 2mm;
-          padding-bottom: 1.5mm;
-          letter-spacing: 0.2px;
-          font-family: "Times New Roman", Times, serif;
-          text-align: center;
+          font-size: 12pt;
+          font-weight: 900;
+          padding-top: 1mm;
+          padding-bottom: 0.8mm;
+          -webkit-text-stroke: 0.1px black;
         }
 
         .rep-data-table thead .col-th {
-          font-weight: normal;
-          font-size: 8.5pt;
-          padding-bottom: 1mm;
+          font-size: 10pt;
+          padding-bottom: 0.5mm;
           line-height: 1.1;
-          font-family: "Times New Roman", Times, serif;
+          font-weight: 400;
           letter-spacing: -0.2px;
+          -webkit-text-stroke: 0.2px black;
         }
 
         .rep-data-table td {
           text-align: center;
-          padding: 0.6mm 0.2mm;
+          padding: 0.3mm 0.1mm;
           line-height: 1.1;
-          font-size: 8.5pt;
-          font-family: "Times New Roman", Times, serif;
+          font-weight: 400;
+          -webkit-text-stroke: 0.2px black;
         }
 
         .rep-data-table .label-cell {
           text-align: left;
-          font-weight: normal;
+          font-weight: 400;
           padding-top: 0mm;
           padding-bottom: 0.5mm;
-          font-size: 9.5pt;
-          font-family: "Times New Roman", Times, serif;
+          font-size: 8pt;
+          -webkit-text-stroke: 0.2px black;
         }
 
         .rep-data-table .border-top {
@@ -320,21 +418,22 @@ function ClassicReportLayout({ entry, targets, reportData, batchSize = 0.5 }) {
         }
 
         .rep-data-table .targets-row td {
-          padding-bottom: 1.5mm;
+          padding-bottom: 0.8mm;
         }
 
         .rep-data-table .totals-row td {
-          font-weight: normal;
-          padding-top: 1mm;
-          padding-bottom: 1mm;
+          font-weight: 400;
+          padding-top: 0.5mm;
+          padding-bottom: 0.5mm;
+          -webkit-text-stroke: 0px black;
         }
 
         .totals-section-top .label-cell {
-          padding-top: 1mm;
+          padding-top: 0.5mm;
         }
 
         .total-actual-row .label-cell {
-          padding-top: 1mm;
+          padding-top: 0.5mm;
         }
 
         .rep-right-align {
@@ -342,19 +441,19 @@ function ClassicReportLayout({ entry, targets, reportData, batchSize = 0.5 }) {
         }
 
         .pm-col-shift {
-          transform: translateX(-8mm);
+          transform: translateX(-2mm);
         }
 
         .mm10-col-shift {
-          transform: translateX(3mm);
+          transform: translateX(1mm);
         }
 
         .moi-col-shift {
-          transform: translateX(-3.5mm);
+          transform: translateX(0mm);
         }
 
         .col-row-shift {
-          transform: translateX(-3.5mm);
+          transform: translateX(0mm);
         }
 
         .target-kg-shift {
@@ -405,13 +504,13 @@ function ClassicReportLayout({ entry, targets, reportData, batchSize = 0.5 }) {
                 <tr><td className="meta-k">Truck Number</td><td className="meta-s">:</td><td className="meta-v">{entry.truckNumber || "—"}</td></tr>
                 <tr><td className="meta-k">Truck Driver</td><td className="meta-s">:</td><td className="meta-v">{entry.truckDriver || "—"}</td></tr>
                 <tr><td className="meta-k">Order Number</td><td className="meta-s">:</td><td className="meta-v">-</td></tr>
-                <tr><td className="meta-k">Batcher Name</td><td className="meta-s">:</td><td className="meta-v">STETTER</td></tr>
+                <tr><td className="meta-k">Batcher Name</td><td className="meta-s">:</td><td className="meta-v">Stetter</td></tr>
               </tbody>
             </table>
           </div>
 
           {/* Right Metadata */}
-          <div style={{ marginRight: "12mm", marginTop: "4mm" }}>
+          <div style={{ marginTop: "4mm" }}>
             <div className="rep-plant-sn-right">
               Plant Serial Number : <span className="v" style={{ fontWeight: 'normal' }}>{entry.plantSN || "—"}</span>
             </div>
@@ -433,7 +532,7 @@ function ClassicReportLayout({ entry, targets, reportData, batchSize = 0.5 }) {
                 <tr>
                   <td className="qty-k">Production Quantity</td>
                   <td className="qty-s">:</td>
-                  <td className="qty-v">{(Number(entry.qty) || 0).toFixed(2)}</td>
+                  <td className="qty-v">{(productionQty || 0).toFixed(2)}</td>
                   <td className="qty-u">M³</td>
                 </tr>
                 <tr>
@@ -445,19 +544,19 @@ function ClassicReportLayout({ entry, targets, reportData, batchSize = 0.5 }) {
                 <tr>
                   <td className="qty-k">With This Load</td>
                   <td className="qty-s">:</td>
-                  <td className="qty-v">{(Number(entry.qty) || 0).toFixed(2)}</td>
+                  <td className="qty-v">{(productionQty || 0).toFixed(2)}</td>
                   <td className="qty-u">M³</td>
                 </tr>
                 <tr>
                   <td className="qty-k">Mixer Capacity</td>
                   <td className="qty-s">:</td>
-                  <td className="qty-v">{Number(batchSize || 0.5).toFixed(2)}</td>
+                  <td className="qty-v">{bSize.toFixed(2)}</td>
                   <td className="qty-u">M³</td>
                 </tr>
                 <tr>
                   <td className="qty-k">Batch Size</td>
                   <td className="qty-s">:</td>
-                  <td className="qty-v">{Number(batchSize || 0.5).toFixed(2)}</td>
+                  <td className="qty-v">{bSize.toFixed(2)}</td>
                   <td className="qty-u">M³</td>
                 </tr>
               </tbody>
@@ -467,7 +566,22 @@ function ClassicReportLayout({ entry, targets, reportData, batchSize = 0.5 }) {
 
         {/* Data Table Section */}
         <table className="rep-data-table">
-          <colgroup><col style={{ width: '11mm' }} /><col style={{ width: '13mm' }} /><col style={{ width: '12mm' }} /><col style={{ width: '14mm' }} /><col style={{ width: '13mm' }} /><col style={{ width: '13mm' }} /><col style={{ width: '13mm' }} /><col style={{ width: '14mm' }} /><col style={{ width: '16mm' }} /><col style={{ width: '7mm' }} /><col style={{ width: '13mm' }} /><col style={{ width: '13mm' }} /><col style={{ width: '13mm' }} /><col style={{ width: '13mm' }} /></colgroup>
+          <colgroup>
+            <col style={{ width: '11mm' }} />
+            <col style={{ width: '13mm' }} />
+            <col style={{ width: '12mm' }} />
+            <col style={{ width: '14mm' }} />
+            <col style={{ width: '13mm' }} />
+            <col style={{ width: '13mm' }} />
+            <col style={{ width: '13mm' }} />
+            <col style={{ width: '14mm' }} />
+            <col style={{ width: '16mm' }} />
+            <col style={{ width: '7mm' }} />
+            <col style={{ width: '13mm' }} />
+            <col style={{ width: '13mm' }} />
+            <col style={{ width: '13mm' }} />
+            <col style={{ width: '13mm' }} />
+          </colgroup>
           <thead>
             <tr className="group-tr">
               {groupOrder.map(g => {
@@ -488,8 +602,12 @@ function ClassicReportLayout({ entry, targets, reportData, batchSize = 0.5 }) {
             <tr className="col-tr col-row-shift">
               {reportColumns.map((col, i) => {
                 let cellContent = col.label;
-                if (col.key === "pm") cellContent = "";
-                else if (col.key === "water") cellContent = "WATE";
+
+                if (col.key === "pm") {
+                  cellContent = "";
+                } else if (col.key === "water") {
+                  cellContent = "WATE";
+                }
 
                 return (
                   <th
@@ -503,22 +621,29 @@ function ClassicReportLayout({ entry, targets, reportData, batchSize = 0.5 }) {
             </tr>
           </thead>
           <tbody>
-            <tr><td colSpan={reportColumns.length} className="label-cell">Targets based on batchsize in</td></tr>
+            <tr>
+              <td colSpan={reportColumns.length} className="label-cell">Targets based on batchsize in</td>
+            </tr>
             <tr className="targets-row border-bottom-thin">
-              {reportColumns.map((col, i) => (
-                <td
-                  key={col.key}
-                  className={`${i === 0 ? "rep-left-align target-kg-shift" : ""} ${col.key === "pm" ? "pm-col-shift" : ""} ${col.key === "moi" ? "moi-col-shift" : ""} ${col.key === "mm10" ? "mm10-col-shift" : ""}`}
-                >
-                  {i === 0 && <span style={{ marginRight: "-1.5mm", fontWeight: 'normal' }}>Kgs.</span>}
-                  {col.key === "moi" && <span style={{ marginRight: '1mm', fontWeight: 'normal' }}>in %</span>}
-                  {col.key === "pm" && <span style={{ marginRight: '1mm', fontWeight: 'normal' }}>+/-</span>}
-                  {getTargetDisplay(col.key, targets)}
-                </td>
-              ))}
+              {reportColumns.map((col, i) => {
+                const val = getTargetDisplay(col.key, targets);
+                return (
+                  <td
+                    key={col.key}
+                    className={`${i === 0 ? "rep-left-align target-kg-shift" : ""} ${col.key === "pm" ? "pm-col-shift" : ""} ${col.key === "moi" ? "moi-col-shift" : ""} ${col.key === "mm10" ? "mm10-col-shift" : ""}`}
+                  >
+                    {i === 0 && <span style={{ marginRight: "-1.5mm", fontFamily: '"Times New Roman", Times, serif', fontWeight: 'normal' }}>Kgs.</span>}
+                    {col.key === "moi" && <span style={{ fontSize: '9.5pt', marginRight: '1mm', fontFamily: '"Times New Roman", Times, serif', fontWeight: 'normal' }}>in %</span>}
+                    {col.key === "pm" && <span style={{ fontSize: '9.5pt', marginRight: '1mm', fontFamily: '"Times New Roman", Times, serif', fontWeight: 'normal' }}>+/-</span>}
+                    {val}
+                  </td>
+                );
+              })}
             </tr>
 
-            <tr><td colSpan={reportColumns.length} className="label-cell">Actual in Kgs.</td></tr>
+            <tr>
+              <td colSpan={reportColumns.length} className="label-cell">Actual in Kgs.</td>
+            </tr>
             {reportData.rows.map((row, idx) => (
               <tr key={idx}>
                 {reportColumns.map((col, i) => (
@@ -532,12 +657,19 @@ function ClassicReportLayout({ entry, targets, reportData, batchSize = 0.5 }) {
               </tr>
             ))}
 
-            <tr className="totals-section-top border-top"><td colSpan={reportColumns.length} className="label-cell">Total Set Weight in Kgs.</td></tr>
+            <tr className="totals-section-top border-top">
+              <td colSpan={reportColumns.length} className="label-cell">Total Set Weight in Kgs.</td>
+            </tr>
             <tr className="totals-row">
               {reportColumns.map((col, i) => {
                 const isPlaceholder = col.key === "moi" || col.key === "pm";
-                const sw = isPlaceholder ? null : (reportData.setWeights?.[col.key] ?? ((Number(targets[col.key]) || 0) * (reportData.totalBatches || 0)));
-                const display = isPlaceholder ? null : ((col.key.includes("admix")) ? Number(sw).toFixed(2) : Math.round(sw));
+                const sw = isPlaceholder
+                  ? null
+                  : (reportData.setWeights?.[col.key] ?? ((Number(targets[col.key]) || 0) * (reportData.totalBatches || 0)));
+                const display = isPlaceholder
+                  ? null
+                  : ((col.key === "admix1" || col.key === "admix2") ? Number(sw).toFixed(2) : Math.round(sw));
+
                 return (
                   <td
                     key={col.key}
@@ -549,14 +681,21 @@ function ClassicReportLayout({ entry, targets, reportData, batchSize = 0.5 }) {
               })}
             </tr>
 
-            <tr style={{ height: '1mm' }}><td colSpan={reportColumns.length}></td></tr>
+            <tr style={{ height: '1mm' }}>
+              <td colSpan={reportColumns.length}></td>
+            </tr>
 
-            <tr className="total-actual-row"><td colSpan={reportColumns.length} className="label-cell">Total Actual in Kgs.</td></tr>
+            <tr className="total-actual-row">
+              <td colSpan={reportColumns.length} className="label-cell">Total Actual in Kgs.</td>
+            </tr>
             <tr className="totals-row border-bottom">
               {reportColumns.map((col, i) => {
                 const isPlaceholder = col.key === "moi" || col.key === "pm";
                 const val = isPlaceholder ? null : (reportData.totals[col.key] || 0);
-                const act = isPlaceholder ? null : (col.key.includes("admix") ? Number(val).toFixed(2) : Math.round(val));
+                const act = isPlaceholder
+                  ? null
+                  : (col.key.includes("admix") ? Number(val).toFixed(2) : Math.round(val));
+
                 return (
                   <td
                     key={col.key}
@@ -569,12 +708,13 @@ function ClassicReportLayout({ entry, targets, reportData, batchSize = 0.5 }) {
             </tr>
           </tbody>
         </table>
+
       </div>
     </div>
   );
 }
 
-// ── SCREEN UI (REPORT TAB) ──────────────────────────────────────────────────
+// ── MODERN SCREEN UI (REPORT TAB) ───────────────────────────────────────────
 
 export function AutographicReport({
   entry,
@@ -586,11 +726,22 @@ export function AutographicReport({
   hideActions = false,
   onUpdateField
 }) {
+  const reconstructedData = useReportData(entry, targets, batchSize, entry?.differences || {});
+  const safeReportData = reportData?.rows ? reportData : reconstructedData;
+
+  const handleSave = () => {
+    if (!entry.companyName || entry.companyName.trim() === "") {
+      toast.error("Please enter a company name");
+      return;
+    }
+    if (onSaveToHistory) onSaveToHistory();
+  };
+
   return (
     <div className="flex flex-col gap-6 pb-20">
       <div className="print:hidden">
         {/* Modern Sticky Header for Actions */}
-        <div className="sticky top-0 z-30 mb-8 flex flex-wrap items-center justify-between gap-6 rounded-2xl border border-border bg-white/80 p-4 shadow-sm backdrop-blur-md">
+        <div className="sticky top-0 z-30 mb-8 max-w-4xl mx-auto flex flex-wrap items-center justify-between gap-6 rounded-2xl border border-border bg-white/80 p-4 shadow-sm backdrop-blur-md">
           <div className="flex flex-col sm:flex-row sm:items-center gap-6">
             <div>
               <p className="text-[10px] font-bold uppercase tracking-widest text-muted mb-1">Company Name</p>
@@ -608,10 +759,7 @@ export function AutographicReport({
                 </p>
               )}
             </div>
-
-            <div className="h-10 w-px bg-border hidden sm:block" />
-
-            <div>
+            <div className="hidden sm:block">
               <p className="text-[10px] font-bold uppercase tracking-widest text-muted mb-1">Plant S/N</p>
               {onUpdateField ? (
                 <input
@@ -628,22 +776,31 @@ export function AutographicReport({
 
           {!hideActions && (
             <div className="flex items-center gap-3">
-              <Button variant="primary" size="md" onClick={onPrint} icon={<Printer size={14} />} className="rounded-xl bg-brand-1 hover:bg-brand-1/90 shadow-lg shadow-brand-1/20 transition-all active:scale-95">
+              <Button
+                variant="primary"
+                size="md"
+                onClick={onPrint}
+                icon={<Printer size={14} />}
+                className="rounded-xl bg-brand-1 hover:bg-brand-1/90 shadow-lg shadow-brand-1/20 transition-all active:scale-95"
+              >
                 Print Report
               </Button>
             </div>
           )}
         </div>
 
-        {/* The Digital Twin Preview */}
-        <div className="flex justify-center overflow-x-auto p-4 md:p-10 bg-stone-100/50 rounded-3xl border border-dashed border-stone-200">
-          <div className="bg-white shadow-[0_20px_50px_rgba(0,0,0,0.1)] ring-1 ring-stone-900/5 rounded-sm origin-top scale-90 sm:scale-100">
-             <ClassicReportLayout 
-               entry={entry} 
-               targets={targets} 
-               reportData={reportData} 
-               batchSize={batchSize} 
-             />
+        {/* Screen Preview — scaled down for display only, never bleeds into print */}
+        <div className="flex justify-center p-2 sm:p-4 md:p-10 bg-stone-100/50 rounded-3xl border border-dashed border-stone-200 overflow-hidden">
+          <div
+            className="bg-white shadow-[0_20px_50px_rgba(0,0,0,0.1)] ring-1 ring-stone-900/5 rounded-sm origin-top transition-transform duration-300"
+            style={{ transform: 'scale(0.75)', transformOrigin: 'top center' }}
+          >
+            <ClassicReportLayout
+              entry={entry}
+              targets={targets}
+              reportData={safeReportData}
+              batchSize={batchSize}
+            />
           </div>
         </div>
       </div>
@@ -651,11 +808,30 @@ export function AutographicReport({
   );
 }
 
-// ── HIDDEN PRINT UI ── //
+// ── HIDDEN PRINT UI ──────────────────────────────────────────────────────────
+// This is what actually prints. No transforms, no scaling — pure 1:1 A4 output.
+
 export function HiddenPrintReport({ entry, targets, reportData, batchSize }) {
+  const reconstructedData = useReportData(entry, targets, batchSize, entry?.differences || {});
+  const safeReportData = reportData?.rows ? reportData : reconstructedData;
+
   return (
-    <div className="hidden print:block">
-      <ClassicReportLayout entry={entry} targets={targets} reportData={reportData} batchSize={batchSize} />
+    <div
+      className="hidden print:block"
+      style={{
+        transform: 'none',
+        zoom: 1,
+        margin: 0,
+        padding: 0,
+        width: '100%',
+      }}
+    >
+      <ClassicReportLayout
+        entry={entry}
+        targets={targets}
+        reportData={safeReportData}
+        batchSize={batchSize}
+      />
     </div>
   );
 }

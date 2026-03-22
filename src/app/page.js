@@ -64,6 +64,7 @@ export default function Home() {
   const [deleteId, setDeleteId] = useState(null);
   const [showClearAll, setShowClearAll] = useState(false);
   const [lastBatch, setLastBatch] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   // ── Data / Logic hooks ──────────────────────
   const {
@@ -112,10 +113,21 @@ export default function Home() {
   }, []);
 
   // ── Print / Tab handlers ───────────────────────────
+  const handleStartBatch = (e) => {
+    e.preventDefault();
+    if (!entry.docketNo || !entry.customerName || !entry.grade || !entry.qty) {
+      toast.error("Please fill all required fields");
+      return;
+    }
+    handleStart();
+  };
+
   const handleViewLastReport = () => {
     // Always show the most recent batch from history
     if (filteredHistory && filteredHistory.length > 0) {
       setLastBatch(filteredHistory[0]);
+    } else {
+      setLastBatch(null);
     }
     setActiveTab("REPORT");
   };
@@ -129,7 +141,9 @@ export default function Home() {
     }
   };
 
-  const onStopBatch = () => {
+  const onStopBatch = async () => {
+    if (isSaving) return;
+    setIsSaving(true);
     const time = new Date().toLocaleTimeString("en-US", {
       hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true,
     });
@@ -141,6 +155,7 @@ export default function Home() {
     const batchData = {
       ...finalEntry,
       mixDesign: finalTargets,
+      differences,
       batchSize,
       rows: reportData.rows,
       totals: reportData.totals,
@@ -148,20 +163,28 @@ export default function Home() {
       totalBatches: reportData.totalBatches
     };
 
-    setLastBatch(batchData);
-
     // 2. Auto-save to history
-    saveToHistory(batchData).then(loadHistory);
+    try {
+      await saveToHistory(batchData);
+      loadHistory();
+      
+      // Update UI state only on successful save
+      setLastBatch(batchData);
 
-    // 3. Clear entry and increment docket, then go to Report tab
-    resetForm();
-    setActiveTab("REPORT");
-    toast.success(`Batch #${finalEntry.docketNo} SAVED ✅`, {
-      description: "Viewing report for this batch."
-    });
+      // 3. Clear entry and increment docket, then go to Report tab
+      resetForm();
+      setActiveTab("REPORT");
+      toast.success(`Batch #${finalEntry.docketNo} SAVED ✅`, {
+        description: "Viewing report for this batch."
+      });
+    } catch (error) {
+      toast.error(`Error saving batch: ${error.message}`);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handleSaveToHistory = () => {
+  const handleSaveToHistory = async () => {
     const dataToSave = lastBatch ? lastBatch : {
       ...entry,
       mixDesign: targets,
@@ -172,13 +195,16 @@ export default function Home() {
       totalBatches: reportData.totalBatches
     };
 
-    saveToHistory(dataToSave).then(() => {
+    try {
+      await saveToHistory(dataToSave);
       loadHistory();
       if (!lastBatch) {
         incrementDocketNo();
       }
       toast.success(`Docket ${dataToSave.docketNo} saved successfully!`);
-    });
+    } catch (error) {
+      toast.error(error.message);
+    }
   };
 
   // 1. Loading state (Checking session...)
@@ -397,6 +423,7 @@ export default function Home() {
         onClose={() => setShowClearAll(false)}
         onConfirm={() => {
           clearAllHistory();
+          setLastBatch(null);
           toast.success("All history deleted");
         }}
         title="Clear All History"

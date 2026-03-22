@@ -20,6 +20,7 @@ export function CustomerManager({
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false);
+  const [deleteCustomerId, setDeleteCustomerId] = useState(null);
   const pageSize = 10;
   
   const siteRef = useRef(null);
@@ -158,9 +159,7 @@ export function CustomerManager({
                 </div>
                 <div className="w-1/3 flex justify-end">
                   <button
-                    onClick={() => {
-                      if (confirm("Delete this customer?")) onDelete(customer._id);
-                    }}
+                    onClick={() => setDeleteCustomerId(customer._id)}
                     className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-red-600 hover:bg-red-50 transition-colors rounded-lg border border-red-100 hover:border-red-200"
                   >
                     Delete
@@ -196,6 +195,20 @@ export function CustomerManager({
           </div>
         )}
       </Card>
+
+      {/* Individual delete confirm */}
+      <ConfirmDialog
+        open={!!deleteCustomerId}
+        onClose={() => setDeleteCustomerId(null)}
+        onConfirm={() => {
+          onDelete(deleteCustomerId);
+          setDeleteCustomerId(null);
+        }}
+        title="Delete Customer"
+        message="Are you sure you want to delete this customer?"
+        confirmLabel="Delete"
+        variant="danger"
+      />
     </div>
   );
 }

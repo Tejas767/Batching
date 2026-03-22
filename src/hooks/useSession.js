@@ -14,15 +14,18 @@ export function useSession({ redirectTo = "", redirectIfFound = false, requireRo
       if (res.ok) {
         const json = await res.json();
         setUser(json.data);
-      } else if (res.status === 403) {
-        // Force logout if forbidden (account deactivated)
-        await fetch("/api/auth/logout", { method: "POST" });
-        setUser(null);
-      } else {
+      } else if (res.status === 401 || res.status === 403) {
+        // Force logout ONLY if unauthorized or forbidden
+        if (res.status === 403) {
+          await fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
+        }
         setUser(null);
       }
+      // If res.status is 500 (server error), just ignore it and keep the user logged in
     } catch (error) {
-      setUser(null);
+      // Network error (e.g., Wi-Fi dropped momentarily)
+      // Do NOTHING. Do not log the user out just because of a temporary connection issue.
+      console.warn("Background auth check failed (network error), keeping current session.");
     } finally {
       setIsLoaded(true);
     }

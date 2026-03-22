@@ -60,7 +60,7 @@ export default function RootLayout({ children }) {
       <body
         className={`${sora.variable} ${splineMono.variable} antialiased`}
       >
-        <Toaster position="top-center" richColors />
+        <Toaster position="top-center" richColors duration={2500} />
         {children}
       </body>
     </html>
