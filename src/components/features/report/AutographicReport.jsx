@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -558,7 +559,7 @@ function ClassicReportLayout({ entry, targets, reportData, batchSize = 0.5 }) {
 
         <div className="rep-logo-area">
           <div className="rep-logo-col">
-            <img src={LOGO_SRC} alt="Logo" className="rep-logo-img" />
+            <Image src={LOGO_SRC} alt="Logo" width={50} height={40} className="rep-logo-img" unoptimized />
             <div className="rep-schwing mt-2">SCHWING</div>
             <div className="rep-schwing">Stetter</div>
           </div>

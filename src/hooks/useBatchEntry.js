@@ -21,23 +21,26 @@ const defaultEntry = {
 };
 
 export function useBatchEntry(user = null) {
-  const [entry, setEntry] = useState(defaultEntry);
-  const [isLoaded, setIsLoaded] = useState(false);
+  // Use lazy initializer to load from localStorage immediately — no effect needed.
+  const [entry, setEntry] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        try {
+          return { ...defaultEntry, ...JSON.parse(saved) };
+        } catch { /* ignore malformed JSON */ }
+      }
+    }
+    return defaultEntry;
+  });
+  const [isLoaded, setIsLoaded] = useState(typeof window !== "undefined");
   const [hasMergedCloud, setHasMergedCloud] = useState(false);
   
   // Track previous values to avoid saving if nothing changed
   const lastSavedCloudSN = useRef("");
   const lastSavedCloudCompany = useRef("");
 
-  // 1. Initial Load from Local Storage (Immediate)
-  useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      setEntry(prev => ({ ...prev, ...parsed }));
-    }
-    setIsLoaded(true);
-  }, []);
+
 
   // 2. Initial Sync (Cloud Settings Overwrite Local)
   useEffect(() => {
@@ -55,6 +58,7 @@ export function useBatchEntry(user = null) {
       }
 
       if (Object.keys(updates).length > 0) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- Safe: one-time cloud merge on mount.
         setEntry(prev => ({ ...prev, ...updates }));
       }
       

@@ -247,7 +247,7 @@ export function BatchEntryForm({
           LAST REPORT
         </Button>
         <p className="text-center text-[11px] text-muted/70 leading-tight">
-          💡 In the print dialog, uncheck <span className="font-semibold text-muted">"Headers and footers"</span> to remove the date, URL &amp; page number.
+          💡 In the print dialog, uncheck <span className="font-semibold text-muted">{'"Headers and footers"'}</span> to remove the date, URL &amp; page number.
         </p>
       </div>
     </div>

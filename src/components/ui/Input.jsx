@@ -114,6 +114,7 @@ export const Combobox = forwardRef(({ label, id, options = [], value, onChange, 
 
   // Sync internal query with value when value changes externally
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Safe: syncing external prop to internal state.
     setQuery(value || "");
   }, [value]);
 
@@ -128,6 +129,7 @@ export const Combobox = forwardRef(({ label, id, options = [], value, onChange, 
 
   // Reset active index when query or options change
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Safe: resetting derived state on input change.
     setActiveIndex(0);
   }, [filteredOptions]);
 

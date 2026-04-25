@@ -26,6 +26,8 @@ import { TabNav }     from "@/components/layout/TabNav";
 import { BatchEntryForm }       from "@/components/features/entry/BatchEntryForm";
 import { MixDesignEditor }      from "@/components/features/mix-design/MixDesignEditor";
 import { AutographicReport, HiddenPrintReport } from "@/components/features/report/AutographicReport";
+import { DeliveryChallan } from "@/components/features/report/DeliveryChallan";
+import { TaxInvoice } from "@/components/features/report/TaxInvoice";
 import { BatchHistoryFilters }  from "@/components/features/history/BatchHistoryFilters";
 import { BatchHistoryTable }    from "@/components/features/history/BatchHistoryTable";
 import { BatchDetailModal }     from "@/components/features/history/BatchDetailModal";
@@ -310,7 +312,7 @@ export default function Home() {
 
           {/* ── REPORT TAB ─── */}
           {activeTab === "REPORT" && (
-            <div className="md:mx-auto md:max-w-5xl">
+            <div className="md:mx-auto md:max-w-5xl space-y-8">
               <AutographicReport
                 entry={lastBatch || entry}
                 targets={lastBatch?.mixDesign || targets}
@@ -320,6 +322,8 @@ export default function Home() {
                 onSaveToHistory={handleSaveToHistory}
                 onUpdateField={handleUpdateField}
               />
+              <DeliveryChallan />
+              <TaxInvoice />
             </div>
           )}
 

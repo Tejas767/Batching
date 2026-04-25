@@ -202,21 +202,15 @@ export async function DELETE(request) {
     await connectDB();
 
     const { searchParams } = new URL(request.url);
-    const id      = searchParams.get("id");
-    const all     = searchParams.get("all") === "true";
+    const id  = searchParams.get("id");
+    const all = searchParams.get("all") === "true";
 
     if (all) {
+      // One single deleteMany — MongoDB handles bulk deletion internally.
+      // No manual batching loop needed.
       const filter = session.role === "admin" ? {} : { userId: session.id };
-      // Safe batch deletion — process 500 records at a time to prevent timeouts
-      let totalDeleted = 0;
-      let batchResult;
-      do {
-        const ids = await BatchRecord.find(filter).select("_id").limit(500).lean();
-        if (ids.length === 0) break;
-        batchResult = await BatchRecord.deleteMany({ _id: { $in: ids.map(d => d._id) } });
-        totalDeleted += batchResult.deletedCount;
-      } while (batchResult && batchResult.deletedCount === 500);
-      return Response.json({ data: { deleted: totalDeleted } });
+      const result = await BatchRecord.deleteMany(filter);
+      return Response.json({ data: { deleted: result.deletedCount } });
     }
 
     if (!id) {

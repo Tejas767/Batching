@@ -13,16 +13,17 @@ import { useReportData } from "@/hooks/useReportData";
 import { Printer } from "lucide-react";
 
 export function BatchDetailModal({ record, onClose, onPrint }) {
-  if (!record) return null;
-
   // Reconstruct report data client-side (deterministic from docketNo+customer+grade+qty)
-  const entry = record;
-  const targets = record.mixDesign || {};
-  const differences = record.differences || {};
-  const batchSize = record.batchSize || 0.5;
+  // Hooks must be called unconditionally (before any early return).
+  const entry = record || {};
+  const targets = record?.mixDesign || {};
+  const differences = record?.differences || {};
+  const batchSize = record?.batchSize || 0.5;
 
   // useReportData generates the exact same rows as when the batch was originally created
   const reportData = useReportData(entry, targets, batchSize, differences);
+
+  if (!record) return null;
 
   return (
     <Modal
