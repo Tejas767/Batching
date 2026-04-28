@@ -47,13 +47,13 @@ export function useBatchEntry(user = null) {
     if (isLoaded && user && !hasMergedCloud) {
       const updates = {};
 
-      // If cloud has a plantSN value, and it's different from local, use cloud
-      if (user.plantSN && user.plantSN !== entry.plantSN) {
+      // Only use cloud value if local is empty (never override user's local edits)
+      if (user.plantSN && !entry.plantSN) {
         updates.plantSN = user.plantSN;
       }
 
-      // If cloud has a companyName value, and it's different from local, use cloud
-      if (user.companyName && user.companyName !== entry.companyName) {
+      // Only use cloud value if local is empty
+      if (user.companyName && !entry.companyName) {
         updates.companyName = user.companyName;
       }
 
@@ -119,17 +119,29 @@ export function useBatchEntry(user = null) {
   }, []);
 
   const handleStart = useCallback(() => {
-    const time = new Date().toLocaleTimeString("en-US", {
+    const now = new Date();
+    const time = now.toLocaleTimeString("en-US", {
       hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true,
     });
-    setEntry((prev) => ({ ...prev, batchStart: time, batchStop: time }));
+    setEntry((prev) => ({ 
+      ...prev, 
+      batchStart: time, 
+      batchStop: time,
+      batchStartISO: now.toISOString(),
+      batchStopISO: now.toISOString()
+    }));
   }, []);
 
   const handleStop = useCallback(() => {
-    const time = new Date().toLocaleTimeString("en-US", {
+    const now = new Date();
+    const time = now.toLocaleTimeString("en-US", {
       hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true,
     });
-    setEntry((prev) => ({ ...prev, batchStop: time }));
+    setEntry((prev) => ({ 
+      ...prev, 
+      batchStop: time,
+      batchStopISO: now.toISOString()
+    }));
   }, []);
 
   const resetForm = useCallback(() => {

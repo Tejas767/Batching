@@ -6,7 +6,8 @@
  */
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
+import { toast } from "sonner";
 import { Input, DisplayField, Select, Combobox } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Play, StopCircle } from "lucide-react";
@@ -34,6 +35,8 @@ export function BatchEntryForm({
   onPrint, 
   onSaveToHistory 
 }) {
+  const [showErrors, setShowErrors] = useState(false);
+
   // ── Enter-to-focus navigation ──────────────────
   // We use refs for all editable fields. Site and Driver are skipped.
   const docketRef = useRef(null);
@@ -71,6 +74,26 @@ export function BatchEntryForm({
     }
   };
 
+  const handleStopClick = () => {
+    const required = ["docketNo", "customerName", "grade", "qty", "truckNumber"];
+    const missing = required.filter(k => !entry[k]);
+    
+    if (missing.length > 0) {
+      setShowErrors(true);
+      toast.error("Please fill all required fields before saving.");
+      return;
+    }
+    
+    if (!entry.batchStart) {
+      setShowErrors(true);
+      toast.error("Please click START BATCH first!");
+      return;
+    }
+    
+    setShowErrors(false);
+    onStop();
+  };
+
   return (
     <div className="grid gap-5 grid-cols-1 md:grid-cols-3">
       {FIELDS.map(({ label, key, type, editable }) => {
@@ -99,10 +122,16 @@ export function BatchEntryForm({
                 onChange={(e) => {
                   const val = e.target.value === "SELECT GRADE" ? "" : e.target.value;
                   onUpdateField(key, val);
+                  if (showErrors) setShowErrors(false);
                 }}
                 onKeyDown={(e) => handleEnterKey(e, "grade")}
                 valid={isValid}
               />
+              {showErrors && !isValid && (
+                <p className="mt-1 text-[10px] font-bold text-red-500 uppercase tracking-tighter">
+                   REQUIRED FIELD
+                </p>
+              )}
             </div>
           );
         }
@@ -119,6 +148,7 @@ export function BatchEntryForm({
                 placeholder="TYPE CUSTOMER..."
                 onChange={(val) => {
                   onUpdateField("customerName", val);
+                  if (showErrors) setShowErrors(false);
                   // Auto-fill site if match found
                   const found = customers.find(c => c.name === val);
                   if (found) {
@@ -130,6 +160,11 @@ export function BatchEntryForm({
                 onKeyDown={(e) => handleEnterKey(e, "customerName")}
                 valid={isValid}
               />
+              {showErrors && !isValid && (
+                <p className="mt-1 text-[10px] font-bold text-red-500 uppercase tracking-tighter">
+                   REQUIRED FIELD
+                </p>
+              )}
             </div>
           );
         }
@@ -146,6 +181,7 @@ export function BatchEntryForm({
                 placeholder="TYPE TRUCK..."
                 onChange={(val) => {
                   onUpdateField("truckNumber", val);
+                  if (showErrors) setShowErrors(false);
                   // Auto-fill driver if match found
                   const found = vehicles.find(v => v.truckNumber === val);
                   if (found) {
@@ -157,6 +193,11 @@ export function BatchEntryForm({
                 onKeyDown={(e) => handleEnterKey(e, "truckNumber")}
                 valid={isValid}
               />
+              {showErrors && !isValid && (
+                <p className="mt-1 text-[10px] font-bold text-red-500 uppercase tracking-tighter">
+                  REQUIRED FIELD
+                </p>
+              )}
             </div>
           );
         }
@@ -178,13 +219,14 @@ export function BatchEntryForm({
                 let val = e.target.value;
                 if (key === "qty" && Number(val) > 100) val = "100";
                 onUpdateField(key, val);
+                if (showErrors) setShowErrors(false);
               }}
               onKeyDown={(e) => editable && handleEnterKey(e, key)}
               valid={isValid}
             />
-            {key === "qty" && Number(value) > 100 && (
+            {showErrors && editable && !isValid && key !== "orderNo" && (
               <p className="mt-1 text-[10px] font-bold text-red-500 uppercase tracking-tighter">
-                ⚠️ Max limit 100m³ to prevent freeze
+                 REQUIRED FIELD
               </p>
             )}
           </div>
@@ -199,9 +241,17 @@ export function BatchEntryForm({
           label="START TIME" 
           placeholder="Auto"
           value={entry.batchStart} 
-          onChange={(e) => onUpdateField("batchStart", e.target.value)}
+          onChange={(e) => {
+            onUpdateField("batchStart", e.target.value);
+            if (showErrors) setShowErrors(false);
+          }}
           onKeyDown={(e) => handleEnterKey(e, "batchStart")}
         />
+        {showErrors && !entry.batchStart && (
+          <p className="mt-1 text-[10px] font-bold text-red-500 uppercase tracking-tighter">
+             CLICK START BATCH FIRST
+          </p>
+        )}
       </div>
       <div>
         <Input 
@@ -229,7 +279,7 @@ export function BatchEntryForm({
         <Button
           variant="danger"
           size="lg"
-          onClick={onStop}
+          onClick={handleStopClick}
           icon={<StopCircle size={15} />}
           className="flex-1 justify-center rounded-xl bg-rose-400 hover:bg-rose-500 border-none shadow-sm text-sm font-semibold tracking-wide transition-colors"
         >

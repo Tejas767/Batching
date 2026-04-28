@@ -63,6 +63,21 @@ export default function Home() {
     requireRole: "operator"
   });
   const [activeTab, setActiveTab] = useState("ENTRY");
+
+  // Restore active tab from localStorage on mount
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("activeTab");
+      if (saved) setActiveTab(saved);
+    }
+  }, []);
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("activeTab", tab);
+    }
+  };
   const [deleteId, setDeleteId] = useState(null);
   const [showClearAll, setShowClearAll] = useState(false);
   const [lastBatch, setLastBatch] = useState(null);
@@ -228,12 +243,12 @@ export default function Home() {
   return (
     <PageShell>
       <div className="print:hidden mx-auto w-full max-w-5xl flex flex-col md:flex-row md:items-center md:justify-between gap-6 pt-0 pb-6 md:pb-8">
-        <TabNav activeTab={activeTab} onTabChange={setActiveTab} />
+        <TabNav activeTab={activeTab} onTabChange={handleTabChange} />
         <AppHeader />
       </div>
 
-      {/* Tab content with enter/exit animations — hidden during print */}
-      <div className="print:hidden">
+      {/* Tab content with enter/exit animations — hidden during print except for BILLING */}
+      <div className={activeTab === "BILLING" ? "" : "print:hidden"}>
       <AnimatePresence mode="wait">
         <motion.section
           key={activeTab}
@@ -322,8 +337,16 @@ export default function Home() {
                 onSaveToHistory={handleSaveToHistory}
                 onUpdateField={handleUpdateField}
               />
-              <DeliveryChallan />
-              <TaxInvoice />
+            </div>
+          )}
+
+          {/* ── BILLING TAB (Challan + Invoice) ─── */}
+          {activeTab === "BILLING" && (
+            <div className="md:mx-auto md:max-w-5xl space-y-8">
+              <DeliveryChallan batch={entry.grade ? entry : (lastBatch || entry)} />
+              <div className="print:hidden">
+                <TaxInvoice />
+              </div>
             </div>
           )}
 
@@ -434,13 +457,15 @@ export default function Home() {
         message="Are you sure you want to PERMANENTLY delete all batch history? This action will erase all records and cannot be undone."
         confirmText="Delete All"
       />
-      {/* Always-mounted hidden print DOM — captured by window.print() regardless of active tab */}
-      <HiddenPrintReport
-        entry={lastBatch || entry}
-        targets={lastBatch?.mixDesign || targets}
-        reportData={lastBatch || reportData}
-        batchSize={lastBatch?.batchSize || batchSize}
-      />
+      {/* Always-mounted hidden print DOM — only when REPORT tab is active */}
+      {activeTab === "REPORT" && (
+        <HiddenPrintReport
+          entry={lastBatch || entry}
+          targets={lastBatch?.mixDesign || targets}
+          reportData={lastBatch || reportData}
+          batchSize={lastBatch?.batchSize || batchSize}
+        />
+      )}
     </PageShell>
   );
 }

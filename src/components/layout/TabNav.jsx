@@ -14,6 +14,7 @@ const TABS = [
   { id: "VEHICLE", label: "VEHICLE" },
   { id: "EDIT", label: "MIX DESIGN" },
   { id: "REPORT", label: "REPORT" },
+  { id: "BILLING", label: "BILLING" },
   { id: "HISTORY", label: "HISTORY" },
 ];
 

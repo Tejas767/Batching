@@ -32,6 +32,8 @@ const BatchRecordSchema = new Schema(
     truckNumber:  { type: String, default: "" },
     batchStart:   { type: String, default: "" },
     batchStop:    { type: String, default: "" },
+    batchStartISO:{ type: String, default: "" },
+    batchStopISO: { type: String, default: "" },
     plantSN:       { type: String, default: "" },
     companyName:   { type: String, default: "" },
     orderNo:       { type: String, default: "" },
@@ -45,6 +47,9 @@ const BatchRecordSchema = new Schema(
     totals:       { type: Schema.Types.Mixed, default: {} },
     setWeights:   { type: Schema.Types.Mixed, default: {} },
     totalBatches: { type: Number, default: 0 },
+    
+    // ── Delivery Challan Extra Fields ──────────────
+    challanData:  { type: Schema.Types.Mixed, default: {} },
   },
   {
     timestamps: true, // createdAt, updatedAt

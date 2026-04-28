@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 /**
  * Editable input — declared OUTSIDE the component to avoid
@@ -18,6 +18,8 @@ function EditableField({ name, value, onChange, className = "", type = "text", p
     />
   );
 }
+
+const INVOICE_STORAGE_KEY = "tax_invoice_data";
 
 export function TaxInvoice() {
   const [data, setData] = useState({
@@ -40,7 +42,7 @@ export function TaxInvoice() {
     buyerContact: "9820023106",
 
     invoiceNo: "MB-23-24/CR-1563",
-    invoiceDate: "21-Oct-23",
+    invoiceDate: new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "2-digit" }).replace(/ /g, "-"),
     deliveryNote: "",
     paymentTerms: "",
     referenceNo: "",
@@ -75,23 +77,92 @@ export function TaxInvoice() {
     bankBranch: "RATNAGIRI & HDFC0000430",
   });
 
+  // Helper: save all invoice data to localStorage immediately
+  const saveInvoice = (newData) => {
+    if (typeof window === "undefined") return;
+    localStorage.setItem(INVOICE_STORAGE_KEY, JSON.stringify(newData));
+  };
+
+  // ── Load saved data from localStorage on mount (client-side only) ──
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const saved = localStorage.getItem(INVOICE_STORAGE_KEY);
+      if (saved) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setData(JSON.parse(saved));
+      }
+    } catch(e) {}
+  }, []);
+
+  // ── SAVE: directly in handlers ──
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setData(prev => ({ ...prev, [name]: value }));
+    setData(prev => {
+      const newData = { ...prev, [name]: value };
+      saveInvoice(newData);
+      return newData;
+    });
   };
 
   const handleItemChange = (index, field, value) => {
     const newItems = [...data.items];
-    const numValue = field === 'qty' || field === 'rate' || field === 'amount' ? parseFloat(value) || 0 : value;
+    const numValue = field === 'qty' || field === 'rate' || field === 'amount' || field === 'disc' ? parseFloat(value) || 0 : value;
     newItems[index][field] = numValue;
     
-    // Auto calculate amount if qty or rate changes
-    if (field === 'qty' || field === 'rate') {
-        newItems[index].amount = (newItems[index].qty * newItems[index].rate);
+    // Auto calculate amount if qty, rate, or disc changes
+    if (field === 'qty' || field === 'rate' || field === 'disc') {
+        const baseAmount = newItems[index].qty * newItems[index].rate;
+        const discPercent = parseFloat(newItems[index].disc) || 0;
+        newItems[index].amount = baseAmount - (baseAmount * discPercent / 100);
     }
     
-    setData(prev => ({ ...prev, items: newItems }));
+    setData(prev => {
+      const newData = { ...prev, items: newItems };
+      saveInvoice(newData);
+      return newData;
+    });
   };
+
+  const clearInvoice = () => {
+    setData(prev => {
+      const newData = {
+        ...prev,
+        buyerName: "",
+        buyerAddressLine1: "",
+        buyerAddressLine2: "",
+        buyerGstin: "",
+        buyerStateName: "Maharashtra",
+        buyerStateCode: "27",
+        buyerPlaceOfSupply: "Maharashtra",
+        buyerContactPerson: "",
+        buyerContact: "",
+        invoiceNo: "",
+        invoiceDate: new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "2-digit" }).replace(/ /g, "-"),
+        invoiceTime: "at " + new Date().toLocaleTimeString("en-US", { hour12: true, hour: "2-digit", minute: "2-digit" }),
+        deliveryNote: "",
+        paymentTerms: "",
+        referenceNo: "",
+        otherReferences: "",
+        buyersOrderNo: "",
+        orderDate: "",
+        dispatchDocNo: "",
+        deliveryNoteDate: "",
+        dispatchedThrough: "",
+        destination: "",
+        termsOfDelivery: "",
+        items: [
+          { id: 1, desc: "", qty: 0, qtyUnit: prev.items[0]?.qtyUnit || "PCS", rate: 0, rateUnit: prev.items[0]?.rateUnit || "PCS", disc: "", amount: 0 },
+          { id: 2, desc: "", qty: 0, qtyUnit: prev.items[1]?.qtyUnit || "", rate: 0, rateUnit: prev.items[1]?.rateUnit || "", disc: "", amount: 0 },
+          { id: 3, desc: "", qty: 0, qtyUnit: prev.items[2]?.qtyUnit || "", rate: 0, rateUnit: prev.items[2]?.rateUnit || "", disc: "", amount: 0 },
+        ],
+        amountInWords: "",
+      };
+      saveInvoice(newData);
+      return newData;
+    });
+  };
+
 
   // Calculations
   const totalTaxableValue = data.items.reduce((sum, item) => sum + (item.amount || 0), 0);
@@ -104,8 +175,94 @@ export function TaxInvoice() {
   const grandTotal = totalTaxableValue + cgstAmount + sgstAmount + igstAmount + parseFloat(data.roundOff || 0);
 
   return (
-    <div className="bg-white p-8 max-w-5xl mx-auto shadow-lg text-[13px] text-gray-900 font-sans print:shadow-none print:p-0 print:max-w-none">
-      <h1 className="text-center font-bold text-lg mb-2">TAX INVOICE</h1>
+    <div className="bg-white p-8 max-w-5xl mx-auto shadow-lg text-[13px] text-gray-900 font-sans print:shadow-none print:p-0 print:max-w-none relative">
+      
+      {/* Action Buttons (Hidden in print) */}
+      <div className="print:hidden absolute top-0 right-8 flex items-center gap-2">
+        {/* Clear Button */}
+        <button 
+          onClick={clearInvoice} 
+          className="bg-red-50 text-red-600 border border-red-200 px-4 py-2 rounded-xl text-sm font-bold shadow-sm hover:bg-red-100 transition-colors"
+        >
+          CLEAR
+        </button>
+
+        <button
+          onClick={() => {
+            if (typeof window === "undefined") return;
+
+            // Find our print:hidden wrapper and temporarily remove it
+            const invoiceEl = document.getElementById("tax-invoice-container");
+            if (!invoiceEl) return;
+
+            // Walk up to find the print:hidden wrapper div
+            const printHiddenWrapper = invoiceEl.closest(".print\\:hidden");
+            if (printHiddenWrapper) {
+              printHiddenWrapper.classList.remove("print:hidden");
+            }
+
+            // Hide all sibling elements at every ancestor level
+            const hidden = [];
+            let el = invoiceEl;
+            while (el && el !== document.body) {
+              const parent = el.parentElement;
+              if (parent) {
+                Array.from(parent.children).forEach(child => {
+                  if (child !== el && child.tagName !== "STYLE" && child.tagName !== "SCRIPT") {
+                    hidden.push({ node: child, prev: child.style.display });
+                    child.style.display = "none";
+                  }
+                });
+              }
+              el = parent;
+            }
+
+            // Inject specific print style to force it onto one page
+            const printCSS = document.createElement("style");
+            printCSS.id = "invoice-print-css";
+            printCSS.textContent = `
+              @media print {
+                @page { size: A4 portrait; margin: 5mm; }
+                html, body { 
+                  margin: 0 !important; 
+                  padding: 0 !important; 
+                  background: white !important; 
+                }
+                #tax-invoice-container {
+                  width: 100% !important;
+                  max-width: 100% !important;
+                  margin: 0 auto !important;
+                  /* Use zoom to actually shrink the flow space (transform only shrinks visual size, causing extra pages) */
+                  zoom: 0.82;
+                }
+                /* Shrink the huge spacer row for taxes in print to save height */
+                .print-shrink-row {
+                  height: 60px !important;
+                }
+              }
+            `;
+            document.head.appendChild(printCSS);
+
+            window.print();
+
+            // Restore everything
+            hidden.forEach(({ node, prev }) => { node.style.display = prev; });
+            document.head.removeChild(printCSS);
+            if (printHiddenWrapper) {
+              printHiddenWrapper.classList.add("print:hidden");
+            }
+          }}
+          className="bg-blue-600 text-white px-6 py-2 rounded-xl text-sm font-bold shadow hover:bg-blue-700 transition-colors flex items-center gap-2"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+          PRINT INVOICE
+        </button>
+      </div>
+
+      <div id="tax-invoice-container">
+      <h1 className="text-center font-bold text-lg mb-2 mt-8 print:mt-0">
+        <EditableField name="documentTitle" value={data.documentTitle || "TAX INVOICE"} onChange={handleChange} className="text-center font-bold text-lg" />
+      </h1>
       
       <div className="border border-gray-800 flex flex-col">
         {/* Top Section */}
@@ -251,7 +408,11 @@ export function TaxInvoice() {
                       onChange={(e) => handleItemChange(index, "qty", e.target.value)}
                       className="w-full bg-transparent outline-none text-right font-semibold"
                     />
-                    <span className="ml-1 text-xs">{item.qtyUnit}</span>
+                    <input
+                      value={item.qtyUnit || ""}
+                      onChange={(e) => handleItemChange(index, "qtyUnit", e.target.value)}
+                      className="ml-1 text-xs w-8 bg-transparent outline-none text-left"
+                    />
                   </div>
                 </td>
                 <td className="border-r border-gray-800 p-1">
@@ -277,19 +438,30 @@ export function TaxInvoice() {
                   />
                 </td>
                 <td className="p-1 text-right font-semibold">
-                  {(item.amount || 0).toFixed(2)}
+                  <input
+                    type="number"
+                    value={item.amount || ""}
+                    onChange={(e) => handleItemChange(index, "amount", e.target.value)}
+                    className="w-full bg-transparent outline-none text-right font-semibold"
+                  />
                 </td>
               </tr>
             ))}
             
             {/* Taxes and Totals Padding row */}
-            <tr className="h-32 align-bottom">
+            <tr className="h-32 align-bottom print-shrink-row">
               <td className="border-r border-gray-800"></td>
               <td className="border-r border-gray-800 p-1 text-right italic font-semibold">
                 <div className="flex justify-end gap-4">
                   <div className="text-right">
-                    <div>CGST</div>
-                    <div>SGST</div>
+                    <div className="flex items-center justify-end gap-1">
+                      <span>CGST @</span>
+                      <input type="number" step="0.5" name="cgstRate" value={data.cgstRate} onChange={(e) => { const newData = { ...data, cgstRate: parseFloat(e.target.value) || 0 }; setData(newData); saveInvoice(newData); }} className="w-10 bg-transparent outline-none text-center border-b border-gray-400 print:border-none" />%
+                    </div>
+                    <div className="flex items-center justify-end gap-1">
+                      <span>SGST @</span>
+                      <input type="number" step="0.5" name="sgstRate" value={data.sgstRate} onChange={(e) => { const newData = { ...data, sgstRate: parseFloat(e.target.value) || 0 }; setData(newData); saveInvoice(newData); }} className="w-10 bg-transparent outline-none text-center border-b border-gray-400 print:border-none" />%
+                    </div>
                     <div>Round Off</div>
                   </div>
                 </div>
@@ -302,7 +474,7 @@ export function TaxInvoice() {
                 <div>{cgstAmount.toFixed(2)}</div>
                 <div>{sgstAmount.toFixed(2)}</div>
                 <div>
-                  <input type="number" step="0.01" name="roundOff" value={data.roundOff} onChange={handleChange} className="w-16 bg-transparent outline-none text-right" />
+                  <input type="number" step="0.01" name="roundOff" value={data.roundOff} onChange={(e) => { const newData = { ...data, roundOff: parseFloat(e.target.value) || 0 }; setData(newData); saveInvoice(newData); }} className="w-16 bg-transparent outline-none text-right" />
                 </div>
               </td>
             </tr>
@@ -339,7 +511,12 @@ export function TaxInvoice() {
             </div>
             
             <div className="w-1/2 p-2">
-              <div className="flex mb-2"><span className="w-24">Date & Time</span>: <span className="font-bold ml-1">{data.invoiceDate} at {new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' })}</span></div>
+              <div className="flex mb-2 items-center">
+                <span className="w-24">Date & Time</span>: 
+                <span className="font-bold ml-1 flex-1 flex gap-1 items-center">
+                  {data.invoiceDate} <EditableField name="invoiceTime" value={data.invoiceTime || "at 12:00 PM"} onChange={handleChange} className="font-bold flex-1" />
+                </span>
+              </div>
               <div className="text-xs mb-1">{"Company's Bank Details"}</div>
               <div className="flex"><span className="w-24">Bank Name</span>: <EditableField name="bankName" value={data.bankName} onChange={handleChange} className="font-bold flex-1" /></div>
               <div className="flex"><span className="w-24">A/c No.</span>: <EditableField name="bankAcNo" value={data.bankAcNo} onChange={handleChange} className="font-bold flex-1" /></div>
@@ -352,7 +529,9 @@ export function TaxInvoice() {
               <div className="w-full border-t border-gray-800 text-center pt-1 text-xs">{"Customer's Seal and Signature"}</div>
             </div>
             <div className="w-1/2 p-2 relative h-24 flex flex-col justify-between items-end">
-              <div className="w-full text-right font-semibold">for {data.companyName}</div>
+              <div className="w-full text-right font-semibold flex justify-end items-center gap-1">
+                for <EditableField name="signCompanyName" value={data.signCompanyName || data.companyName} onChange={handleChange} className="text-right font-semibold w-auto inline-block min-w-[150px]" />
+              </div>
               <div className="text-xs text-right mt-auto w-full border-t border-gray-800 pt-1">Authorised Signatory</div>
             </div>
           </div>
@@ -360,9 +539,10 @@ export function TaxInvoice() {
       </div>
       
       <div className="text-center mt-2 text-xs font-semibold">
-        SUBJECT TO RATNAGIRI JURISDICTION<br/>
+        <EditableField name="jurisdiction" value={data.jurisdiction || "SUBJECT TO RATNAGIRI JURISDICTION"} onChange={handleChange} className="text-center font-semibold w-full block" />
         This is a Computer Generated Invoice
       </div>
+      </div>{/* end tax-invoice-container */}
     </div>
   );
 }
