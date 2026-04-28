@@ -125,7 +125,7 @@ export function DeliveryChallan({ batch = {}, onSave }) {
       typeOfLoading: globalSettings.typeOfLoading ?? prev.typeOfLoading,
       timeAtSite: prev.timeAtSite,
       exitFromSite: prev.exitFromSite,
-      plantName: globalSettings.plantName ?? prev.plantName,
+      plantName: batch.companyName || (globalSettings.plantName ?? prev.plantName),
       weightBridge: globalSettings.weightBridge ?? prev.weightBridge,
       castingPurpose: globalSettings.castingPurpose ?? prev.castingPurpose,
       remark: globalSettings.remark ?? prev.remark,
